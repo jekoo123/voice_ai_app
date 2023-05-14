@@ -9,7 +9,6 @@ from google.cloud import speech_v1p1beta1 as speech
 
 app = Flask(__name__)
 
-# OpenAI API 키 설정
 openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
