@@ -12,11 +12,13 @@ import {
 } from "react-native";
 
 export default function ChatScreen() {
+
   const [input, setInput] = useState("");
   const [array, setArray] = useState([]);
   const submitMessage = async () => {
     try {
       const result = await axios.post("http://192.168.118.72:5000/chat", {
+
         input: input,
       });
       setArray([...array, [input,result.data.response],]);
@@ -25,14 +27,14 @@ export default function ChatScreen() {
     }
   };
 
-  
-
   return (
     <>  
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.container}>
+
         <Text style={styles.title}>ChatLog</Text>
         <View style={styles.chatBox}>
+
           {array.map((e) => {
             return <>
               <Text style={styles.response}>{e[0]}</Text>
