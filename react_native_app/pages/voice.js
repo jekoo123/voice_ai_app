@@ -1,11 +1,24 @@
-import React, { useState } from "react";
-import { Button, Text, View, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { Audio } from "expo-av";
 import axios from "axios";
-export default function VoiceScreen(navigation) {
+export default function VoiceScreen({ navigation }) {
   const [recording, setRecording] = useState();
   const [transcription, setTranscription] = useState("");
-  const [chatdata, setChatdata] = useState({});
+  const [isRecording, setIsRecording] = useState(false);
+  const [chatdata, setChatdata] = useState([]);
+  useEffect(() => {
+    if (transcription !== "") { 
+      submitMessage();
+    }
+  }, [transcription]);
 
   async function startRecording() {
     try {
@@ -39,6 +52,7 @@ export default function VoiceScreen(navigation) {
       });
       await recording.startAsync();
       setRecording(recording);
+      setIsRecording(true);
     } catch (err) {
       console.error("Failed to start recording", err);
     }
@@ -48,14 +62,12 @@ export default function VoiceScreen(navigation) {
     setRecording(undefined);
     await recording.stopAndUnloadAsync();
     const uri = recording.getURI();
-
     const formData = new FormData();
     formData.append("file", {
       uri,
       name: "audio.m4a",
       type: "audio/m4a",
     });
-
     const response = await axios.post(
       "http://192.168.0.8:5000/transcribe",
       formData,
@@ -65,16 +77,19 @@ export default function VoiceScreen(navigation) {
         },
       }
     );
-    setTranscription(response.data.transcription);
-  
+    setIsRecording(false);
+    setTranscription(response.data.transcription || null);
   }
 
   const submitMessage = async () => {
     try {
-      const result = await axios.post("http://:5000/chat", {
-        input: input,
+      const result = await axios.post("http://192.168.0.8:5000/chat", {
+        input: transcription,
       });
-      setArray([...array, [input, result.data.response]]);
+      setChatdata([
+        ...chatdata,
+        { input: transcription, response: result.data.response },
+      ]);
     } catch (error) {
       console.error(error);
     }
@@ -82,23 +97,82 @@ export default function VoiceScreen(navigation) {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <TouchableOpacity onPress={() => navigation.navigate("Chat")}>
-        <Text>Chat Log</Text>
+      <TouchableOpacity
+        style={[styles.button, styles.chatButton]}
+        onPress={() => navigation.navigate("Chat", { chatdata })}
+      >
+        <Text style={styles.buttonText}>Chat Log</Text>
       </TouchableOpacity>
-      <Button
-        onPress={recording ? stopRecording : startRecording}
-        title={recording ? "Stop Recording" : "Start Recording"}
+      <Image
+        source={
+          isRecording
+            ? require("../assets/asuna.png")
+            : require("../assets/asuna1.png")
+        }
+        style={styles.image}
+        resizeMode="contain"
       />
-      <Text>Transcription: {transcription}</Text>
+
+      <View style={styles.recordContainer}>
+        <TouchableOpacity
+          style={styles.recordButton}
+          onPress={isRecording ? stopRecording : startRecording}
+        >
+          <Text style={[styles.buttonText, { color: "black" }]}>
+            {isRecording ? "Off" : "On"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button:{
-    
-
-  }
-
-
-})
+  button: {
+    backgroundColor: "#B814B4",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  recordButton: {
+    backgroundColor: "beige",
+    borderRadius: 10,
+    marginTop: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  chatButton: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    marginRight: 20,
+    marginTop: 20,
+  },
+  image: {
+    marginLeft: 10,
+    width: 300,
+    height: 500,
+  },
+});

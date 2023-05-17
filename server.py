@@ -13,8 +13,8 @@ from google.cloud import speech_v1p1beta1 as speech
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = ""
-client_file = ''
+openai.api_key = "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"
+client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
 # cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.mongodb.net/?retryWrites=true&w=majority")
