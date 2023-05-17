@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Text,
   View,
+  
   Button,
 } from "react-native";
 
@@ -17,8 +18,7 @@ export default function ChatScreen() {
   const [array, setArray] = useState([]);
   const submitMessage = async () => {
     try {
-      const result = await axios.post("http://192.168.118.72:5000/chat", {
-
+      const result = await axios.post("http://:5000/chat", {
         input: input,
       });
       setArray([...array, [input,result.data.response],]);
