@@ -6,15 +6,19 @@ from werkzeug.utils import secure_filename
 from pydub import AudioSegment
 from google.oauth2 import service_account
 from google.cloud import speech_v1p1beta1 as speech
+# from pymongo import MongoClient
+# from bson.objectid import ObjectId
+
 
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
-client_file = 'sa_speech_demo.json'
+openai.api_key = ""
+client_file = ''
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
-
+# cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.mongodb.net/?retryWrites=true&w=majority")
+# db = cluster["voice_ai"]
 
 @app.route('/chat', methods=['POST'])
 def chat():
