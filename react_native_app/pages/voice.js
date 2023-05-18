@@ -69,7 +69,7 @@ export default function VoiceScreen({ navigation }) {
       type: "audio/m4a",
     });
     const response = await axios.post(
-      "http://192.168.0.8:5000/transcribe",
+      "http://192.168.118.72:5000/transcribe",
       formData,
       {
         headers: {
@@ -83,7 +83,7 @@ export default function VoiceScreen({ navigation }) {
 
   const submitMessage = async () => {
     try {
-      const result = await axios.post("http://192.168.0.8:5000/chat", {
+      const result = await axios.post("http://192.168.118.72:5000/chat", {
         input: transcription,
       });
       setChatdata([
@@ -97,13 +97,13 @@ export default function VoiceScreen({ navigation }) {
   };
   async function playSound(text) {
     try {
-      const response = await axios.post("http://192.168.0.8:5000/tts", {
+      const response = await axios.post("http://192.168.118.72:5000/tts", {
         text,
       });
-  
+
       // Assuming the TTS service returns a JSON object with the URL of the audio file
       const audioUrl = response.data.url;
-  
+
       const { sound: newSound } = await Audio.Sound.createAsync({
         uri: audioUrl,
       });
