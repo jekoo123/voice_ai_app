@@ -15,8 +15,8 @@ from google.cloud import texttospeech
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
-client_file = 'sa_speech_demo.json'
+openai.api_key = ""
+client_file = ''
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
 # cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.mongodb.net/?retryWrites=true&w=majority")
