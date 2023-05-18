@@ -15,7 +15,7 @@ export default function VoiceScreen({ navigation }) {
   const [isRecording, setIsRecording] = useState(false);
   const [chatdata, setChatdata] = useState([]);
   useEffect(() => {
-    if (transcription !== "") { 
+    if (transcription !== "") {
       submitMessage();
     }
   }, [transcription]);
@@ -90,11 +90,28 @@ export default function VoiceScreen({ navigation }) {
         ...chatdata,
         { input: transcription, response: result.data.response },
       ]);
+      playSound(result.data.response);
     } catch (error) {
       console.error(error);
     }
   };
-
+  async function playSound(text) {
+    try {
+      const response = await axios.post("http://192.168.0.8:5000/tts", {
+        text,
+      });
+  
+      // Assuming the TTS service returns a JSON object with the URL of the audio file
+      const audioUrl = response.data.url;
+  
+      const { sound: newSound } = await Audio.Sound.createAsync({
+        uri: audioUrl,
+      });
+      newSound.playAsync();
+    } catch (error) {
+      console.error(error);
+    }
+  }
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <TouchableOpacity
