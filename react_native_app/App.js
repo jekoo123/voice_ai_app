@@ -1,20 +1,37 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from './pages/home';
-import ChatScreen from './pages/chat';
-import VoiceScreen from './pages/voice';
+import { Provider } from "react-redux";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import HomeScreen from "./pages/home";
+import ChatScreen from "./pages/chat";
+import VoiceScreen from "./pages/voice";
+import Store from "./storage/store";
+import MyScreen from "./pages/My";
+import LogoTitle from "./components/logo_title";
+import SettingScreen from "./pages/settings";
 const Stack = createStackNavigator();
 
 export default function App() {
-  
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} />
-        <Stack.Screen name="Voice" component={VoiceScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Provider store={Store}>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={HomeScreen}/>
+          <Stack.Screen name="기록" component={ChatScreen}             options={{
+              headerTitle: () => <LogoTitle title="기록" />,
+            }}/>
+          <Stack.Screen name="대화" component={VoiceScreen}             options={{
+              headerTitle: () => <LogoTitle title="대화" />,
+            }}/>
+          <Stack.Screen
+            name="MY"
+            component={MyScreen}
+            options={{
+              headerTitle: () => <LogoTitle title="MY" />,
+            }}
+          />
+          <Stack.Screen name="설정" component={SettingScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </Provider>
   );
 }

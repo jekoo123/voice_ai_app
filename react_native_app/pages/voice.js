@@ -1,24 +1,21 @@
 import React, { useState, useEffect } from "react";
 import {
-  Button,
-  Text,
-  View,
+  Image,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  ImageBackground,
+  View,
 } from "react-native";
 import { Audio } from "expo-av";
 import axios from "axios";
-export default function VoiceScreen({ navigation }) {
+import Toolbar from "../components/toolbar";
+import { useDispatch } from "react-redux";
+import { addToMyData, deleteALL } from "../storage/actions";
+
+export default function VoiceScreen() {
   const [recording, setRecording] = useState();
-  const [transcription, setTranscription] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [chatdata, setChatdata] = useState([]);
-  useEffect(() => {
-    if (transcription !== "") {
-      submitMessage();
-    }
-  }, [transcription]);
+  const dispatch = useDispatch();
 
   async function startRecording() {
     try {
@@ -59,137 +56,95 @@ export default function VoiceScreen({ navigation }) {
   }
 
   async function stopRecording() {
-    setRecording(undefined);
-    await recording.stopAndUnloadAsync();
-    const uri = recording.getURI();
-    const formData = new FormData();
-    formData.append("file", {
-      uri,
-      name: "audio.m4a",
-      type: "audio/m4a",
-    });
-    const response = await axios.post(
-      "http://192.168.118.72:5000/transcribe",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-    setIsRecording(false);
-    setTranscription(response.data.transcription || null);
-  }
-
-  const submitMessage = async () => {
     try {
-      const result = await axios.post("http://192.168.118.72:5000/chat", {
-        input: transcription,
-      });
-      setChatdata([
-        ...chatdata,
-        { input: transcription, response: result.data.response },
-      ]);
-      playSound(result.data.response);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  async function playSound(text) {
-    try {
-      const response = await axios.post("http://192.168.118.72:5000/tts", {
-        text,
-      });
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
 
-      // Assuming the TTS service returns a JSON object with the URL of the audio file
-      const audioUrl = response.data.url;
+      setRecording(undefined);
+      setIsRecording(false);
 
+      const formData = new FormData();
+      formData.append("file", {
+        uri,
+        name: "audio.m4a",
+        type: "audio/m4a",
+      });
+      const response = await axios.post(
+        "http://192.168.0.8:5000/transcribe",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      dispatch(
+        addToMyData([response.data.sttResponse, response.data.chatResponse])
+      );
+
+      const audioUrl = response.data.audioUrl;
       const { sound: newSound } = await Audio.Sound.createAsync({
         uri: audioUrl,
       });
       newSound.playAsync();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Failed to stop recording", err);
     }
   }
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <TouchableOpacity
-        style={[styles.button, styles.chatButton]}
-        onPress={() => navigation.navigate("Chat", { chatdata })}
-      >
-        <Text style={styles.buttonText}>Chat Log</Text>
-      </TouchableOpacity>
-      <Image
-        source={
-          isRecording
-            ? require("../assets/asuna.png")
-            : require("../assets/asuna1.png")
-        }
-        style={styles.image}
-        resizeMode="contain"
-      />
 
-      <View style={styles.recordContainer}>
+  return (
+    <ImageBackground
+      style={styles.voice_screen}
+      source={
+        isRecording
+          ? require("../assets/asuna1.png")
+          : require("../assets/asuna.png")
+      }
+    >
+      <View style={styles.container}>
         <TouchableOpacity
           style={styles.recordButton}
           onPress={isRecording ? stopRecording : startRecording}
         >
-          <Text style={[styles.buttonText, { color: "black" }]}>
-            {isRecording ? "Off" : "On"}
-          </Text>
+          <Image
+            style={styles.button_bg}
+            source={
+              isRecording
+                ? require("../assets/Mike_on_img.png")
+                : require("../assets/Mike_off_img.png")
+            }
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
-    </View>
+      <View style={styles.toolbar} >
+        <Toolbar />
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    backgroundColor: "#B814B4",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  voice_screen: {
+    flex: 1,
   },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
+  container: {
+    flex: 0.9,
   },
   recordButton: {
-    backgroundColor: "beige",
-    borderRadius: 10,
-    marginTop: 30,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  chatButton: {
     position: "absolute",
-    top: 0,
-    right: 0,
-    marginRight: 20,
-    marginTop: 20,
+    left: "36.53%",
+    right: "36.8%",
+    top: "80%",
+    bottom: "30%",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#D7C4FB",
   },
-  image: {
-    marginLeft: 10,
-    width: 300,
-    height: 500,
-  },
+  toolbar:{
+    flex:0.1
+
+  }
 });
