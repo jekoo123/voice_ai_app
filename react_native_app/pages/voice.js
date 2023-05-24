@@ -10,7 +10,7 @@ import { Audio } from "expo-av";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch } from "react-redux";
-import { addToMyData, deleteALL } from "../storage/actions";
+import { addArray1 } from "../storage/actions";
 
 export default function VoiceScreen() {
   const [recording, setRecording] = useState();
@@ -70,7 +70,7 @@ export default function VoiceScreen() {
         type: "audio/m4a",
       });
       const response = await axios.post(
-        "http://192.168.0.8:5000/transcribe",
+        "http://192.168.28.72:5000/transcribe",
         formData,
         {
           headers: {
@@ -79,10 +79,7 @@ export default function VoiceScreen() {
         }
       );
 
-      dispatch(
-        addToMyData([response.data.sttResponse, response.data.chatResponse])
-      );
-
+      dispatch(addArray1([response.data.sttResponse, response.data.chatResponse]));
       const audioUrl = response.data.audioUrl;
       const { sound: newSound } = await Audio.Sound.createAsync({
         uri: audioUrl,
@@ -98,8 +95,8 @@ export default function VoiceScreen() {
       style={styles.voice_screen}
       source={
         isRecording
-          ? require("../assets/asuna1.png")
-          : require("../assets/asuna.png")
+          ? require("../assets/Ai_talking.png")
+          : require("../assets/Ai_listening.png")
       }
     >
       <View style={styles.container}>

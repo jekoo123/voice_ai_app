@@ -8,72 +8,15 @@ from google.oauth2 import service_account
 from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import texttospeech
 from google.cloud import storage
-
-
-# from pymongo import MongoClient
-# from bson.objectid import ObjectId
+from difflib import SequenceMatcher
 
 app = Flask(__name__)
 
 # OpenAI API 키 설정
 openai.api_key = ""
-client_file = ''
+client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
-
-
-def chat(user_input):
-    try:
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=f"User: {user_input}\nAI:",
-            temperature=0.5,
-            max_tokens=150,
-            top_p=1.0,
-            frequency_penalty=0.0,
-            presence_penalty=0.0,
-            n=1,
-            stop=["User:"]
-        )
-        ai_response = response.choices[0].text.strip()
-        return ai_response
-
-    except Exception as e:
-        return str(e)
-    
-@app.route('/transcribe', methods=['POST'])
-def transcribe_audio():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file found"}), 400
-    transcription_text = ""
-    file = request.files['file']
-    filename = secure_filename(file.filename)
-    file_path = os.path.join("uploads", filename)
-    file.save(file_path)
-
-    audio = AudioSegment.from_file(file_path)
-    audio = audio.set_frame_rate(48000)
-    audio = audio.set_channels(1)
-    audio = audio.set_sample_width(2)
-    audio.export(file_path, format="wav")
-
-    with open(file_path, "rb") as audio_file:
-        content = audio_file.read()
-        audio = speech.RecognitionAudio(content=content)
-
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=48000,
-        language_code="en-US",
-    )
-
-    response = client.recognize(config=config, audio=audio)
-
-    for result in response.results:
-        transcription_text = result.alternatives[0].transcript
-    chat_response = chat(transcription_text)
-    audio_url = synthesize_speech_and_upload_to_gcs(chat_response)
-    return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audioUrl": audio_url}), 200
 
 def synthesize_speech_and_upload_to_gcs(text):
     client = texttospeech.TextToSpeechClient(credentials=credentials)
@@ -127,9 +70,87 @@ def save_to_gcs(bucket_name, source_file_name):
     # )
     
     blob.make_public()
-
+    
     return blob.public_url
 
+def chat(user_input):
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=f"User: {user_input}\nAI:",
+            temperature=0.5,
+            max_tokens=150,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0,
+            n=1,
+            stop=["User:"]
+        )
+        ai_response = response.choices[0].text.strip()
+        return ai_response
+
+    except Exception as e:
+        return str(e)
+    
+@app.route('/transcribe', methods=['POST'])
+def transcribe_audio():
+    if 'file' not in request.files:
+        return jsonify({"error": "No f ile found"}), 400
+    transcription_text = ""
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    file_path = os.path.join("uploads", filename)
+    file.save(file_path)
+
+    audio = AudioSegment.from_file(file_path)
+    audio = audio.set_frame_rate(48000)
+    audio = audio.set_channels(1)
+    audio = audio.set_sample_width(2)
+    audio.export(file_path, format="wav")
+
+    with open(file_path, "rb") as audio_file:
+        content = audio_file.read()
+        audio = speech.RecognitionAudio(content=content)
+
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz=48000,
+        language_code="en-US",
+    )
+
+    response = client.recognize(config=config, audio=audio)
+
+    for result in response.results:
+        transcription_text = result.alternatives[0].transcript
+    chat_response = chat(transcription_text)
+    audio_url = synthesize_speech_and_upload_to_gcs(chat_response)
+    return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audioUrl": audio_url}), 200
+
+@app.route('/evaluation', methods=['POST'])
+def evaluation():
+    input = request.json.get('input')
+    response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=f"Correct this to standard English:\n\n {input}",
+            temperature=0,
+            max_tokens=60,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0
+        )
+    return jsonify({"grammer": response.choices[0].text.strip()})
+
+@app.route('/score', methods=['POST'])
+def score():
+    input = request.json.get('input')
+    input2 = request.json.get('input2')
+    ratio = SequenceMatcher(None, input,input2 ).ratio()
+    return jsonify({"grammer_score" : ratio})
+
+# str1 = "hello how are you"
+# str2 = "Hello, how are you?"
+# ratio = SequenceMatcher(None, str1, str2).ratio()
+# print(ratio)
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
