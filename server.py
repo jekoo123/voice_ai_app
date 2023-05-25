@@ -15,7 +15,7 @@ from difflib import SequenceMatcher
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = ""
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
