@@ -11,10 +11,12 @@ import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch } from "react-redux";
 import { addArray1 } from "../storage/actions";
+import * as FileSystem from "expo-file-system";
 
 export default function VoiceScreen() {
   const [recording, setRecording] = useState();
   const [isRecording, setIsRecording] = useState(false);
+  const [img, setImg] = useState(0);
   const dispatch = useDispatch();
 
   async function startRecording() {
@@ -50,6 +52,7 @@ export default function VoiceScreen() {
       await recording.startAsync();
       setRecording(recording);
       setIsRecording(true);
+      setImg(1);
     } catch (err) {
       console.error("Failed to start recording", err);
     }
@@ -62,6 +65,7 @@ export default function VoiceScreen() {
 
       setRecording(undefined);
       setIsRecording(false);
+      setImg(2);
 
       const formData = new FormData();
       formData.append("file", {
@@ -70,7 +74,7 @@ export default function VoiceScreen() {
         type: "audio/m4a",
       });
       const response = await axios.post(
-        "http://192.168.28.72:5000/transcribe",
+        "http://192.168.212.72:5000/transcribe",
         formData,
         {
           headers: {
@@ -78,13 +82,20 @@ export default function VoiceScreen() {
           },
         }
       );
+      dispatch(
+        addArray1([response.data.sttResponse, response.data.chatResponse])
+      );
 
-      dispatch(addArray1([response.data.sttResponse, response.data.chatResponse]));
-      const audioUrl = response.data.audioUrl;
-      const { sound: newSound } = await Audio.Sound.createAsync({
-        uri: audioUrl,
+      const audio = response.data.audio;
+      const audioFileUri = FileSystem.documentDirectory + "temp.mp3";
+      await FileSystem.writeAsStringAsync(audioFileUri, audio, {
+        encoding: FileSystem.EncodingType.Base64,
       });
-      newSound.playAsync();
+      const { sound: audioSound } = await Audio.Sound.createAsync({
+        uri: audioFileUri,
+      });
+      audioSound.playAsync();
+      setImg(0);
     } catch (err) {
       console.error("Failed to stop recording", err);
     }
@@ -94,9 +105,11 @@ export default function VoiceScreen() {
     <ImageBackground
       style={styles.voice_screen}
       source={
-        isRecording
-          ? require("../assets/Ai_talking.png")
-          : require("../assets/Ai_listening.png")
+        img === 0
+          ? require("../assets/Ai_default.png")
+          : img === 1
+          ? require("../assets/Ai_listening.png")
+          : require("../assets/Ai_talking.png")
       }
     >
       <View style={styles.container}>
@@ -115,7 +128,7 @@ export default function VoiceScreen() {
           />
         </TouchableOpacity>
       </View>
-      <View style={styles.toolbar} >
+      <View style={styles.toolbar}>
         <Toolbar />
       </View>
     </ImageBackground>
@@ -140,8 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "#D7C4FB",
   },
-  toolbar:{
-    flex:0.1
-
-  }
+  toolbar: {
+    flex: 0.1,
+  },
 });

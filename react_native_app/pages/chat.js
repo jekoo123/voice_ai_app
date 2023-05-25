@@ -13,12 +13,18 @@ import { useDispatch } from "react-redux";
 import { setArray1 } from "../storage/actions";
 export default function ChatScreen() {
   const dispatch = useDispatch();
+  const [evaluation, setEvaluation] = useState([]);
   const data = useSelector((state) => {
     return state;
   });
-
+  //to 동진
+  // const data = useSelector((state) => {
+  //   return state.number;
+  // });
+  //if numver ->  data = 1 or 0
+  console.log(data.array1)
   useEffect(() => {
-    if (data && data.array1 && data.array1.length <= 2) {
+    if (data.array1) {
       submitAllMessages();
     }
     // console.log('charScreen:21', data);
@@ -37,23 +43,62 @@ export default function ChatScreen() {
   // }, [evaluation]);
 
   const submitAllMessages = async () => {
-    try {
-      const promises = data.array1.map((e) =>
-        axios.post("http://192.168.28.72:5000/evaluation", { input: e[0] })
-      );
-      const results = await Promise.all(promises);
-
-      const newArray1 = data.array1.map((item, index) => [
-        ...item,
-        results[index].data.grammer,
-      ]);
-
-      dispatch(setArray1(newArray1));
-      console.log(data.array1);
-    } catch (error) {
-      console.error(error);
-    }
+    const newArray1Promises = data.array1.map(async (e) => {
+      if(e.length<3){
+        try{
+          const response = await axios.post("http://192.168.212.72:5000/evaluation", { input: e[0] });
+          return [...e, response.data.grammer];  // updated item with evaluation result
+        } catch (error) {
+          console.error(error);
+          return e;  // if error occurs, return original item
+        }
+      } else {
+        return e;  // if item already has evaluation result, return original item
+      }
+    });
+  
+    const newArray1 = await Promise.all(newArray1Promises);
+    setEvaluation(newArray1);
+    dispatch(setArray1(newArray1));
   };
+  // const submitAllMessages = async () => {
+  
+  //   const newArray1 = data.array1.map(async (e) => {
+  //     if(e.length<3){
+  //       try{
+  //         const response = await axios.post("http://192.168.28.72:5000/evaluation", { input: e[0] });
+  //         e.push(response.data.grammer)
+  //       } catch (error) {
+  //         console.error(error);
+  //       }
+
+  //     }
+
+  //   })
+  //   setEvaluation(newArray1);
+
+  //   dispatch(setArray1(newArray1));
+  //   // try {
+  //   //   const promises = data.array1.map((e) =>
+  //   //     axios.post("http://192.168.28.72:5000/evaluation", { input: e[0] })
+  //   //   );
+  //   //   const results = await Promise.all(promises);
+
+  //   //   const newArray1 = data.array1.map((item, index) => [
+  //   //     ...item,
+  //   //     results[index].data.grammer,
+  //   //   ]);
+  //   //   setEvaluation(newArray1);
+
+  //   //   dispatch(setArray1(newArray1));
+  //   //   // dispatch(1);
+  //   //   console.log("at chat", data.array1)
+  //   // } catch (error) {
+  //   //   console.error(error);
+  //   // }
+  // };
+  // // console.log(evaluation);
+
   const renderItem = ({ item }) => (
     <View style={styles.scroll}>
       <View style={styles.MyTextBoxContainer}>
@@ -93,7 +138,7 @@ export default function ChatScreen() {
         </View>
 
         <FlatList
-          data={data.array1}
+          data={evaluation}
           renderItem={renderItem}
           keyExtractor={(item, index) => index.toString()}
         />
