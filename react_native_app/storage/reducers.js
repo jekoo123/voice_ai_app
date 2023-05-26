@@ -1,5 +1,5 @@
 // reducers.js
-import { ADD_ARRAY1, SET_ARRAY1, SET_NUMBER } from "./actions";
+import { ADD_ARRAY1, SET_ARRAY1, SET_NUMBER, SET_ID } from "./actions";
 
 // const myReducer = (state = [], action) => {
 //   switch (action.type) {
@@ -16,6 +16,7 @@ import { ADD_ARRAY1, SET_ARRAY1, SET_NUMBER } from "./actions";
 const initialState = {
   array1: [],
   number: 0,
+  id: "",
 };
 
 function rootReducer(state = initialState, action) {
@@ -27,6 +28,8 @@ function rootReducer(state = initialState, action) {
       return { ...state, array1: action.payload };
     case SET_NUMBER:
       return { ...state, number: action.payload };
+    case SET_ID:
+      return { ...state, id: action.payload };
     default:
       return state;
   }

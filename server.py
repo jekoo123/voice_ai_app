@@ -11,6 +11,8 @@ from google.cloud import speech_v1p1beta1 as speech
 from google.cloud import texttospeech
 from google.cloud import storage
 from difflib import SequenceMatcher
+from pymongo import MongoClient
+# from bson.objectid import ObjectId
 
 app = Flask(__name__)
 
@@ -19,6 +21,9 @@ openai.api_key = ""
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
+app.secret_key = '1234'
+cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.mongodb.net/?retryWrites=true&w=majority")
+db = cluster["voice_ai_app"]
 
 
 class Conversation:
@@ -38,15 +43,7 @@ class Conversation:
     def reset_context(self):
         self.context = ""
 
-language_code = "en-US" 
 conversation = Conversation()
-
-@app.route('/flow_flag', methods=['GET'])
-def get_flow_flag():
-    flow_flag = conversation.get_flow_flag()
-    flow_flag = 1 if flow_flag == 0 else 0
-    conversation.set_flow_flag(flow_flag)
-    return jsonify({'flow_flag': flow_flag})
 
 def synthesize_speech_and_upload_to_gcs(text):
     startTime= time.time()
@@ -56,7 +53,7 @@ def synthesize_speech_and_upload_to_gcs(text):
 
     voice = texttospeech.VoiceSelectionParams(
         language_code="en-US", 
-        ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
+        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
     )
 
     audio_config = texttospeech.AudioConfig(
@@ -121,7 +118,7 @@ def synthesize_speech_and_upload_to_gcs(text):
 #     return blob.public_url
 
 
-def chat(user_input):
+def chat(user_input, language_code):
     try:
         flow_flag = conversation.get_flow_flag()
         print(f"Current flow_flag value: {flow_flag}")
@@ -175,26 +172,32 @@ def chat(user_input):
     except Exception as e:
         return str(e)
     
-@app.route("/get_language", methods=["GET"])
-def get_language():
-    return jsonify({"language_code": language_code})
-
-@app.route('/set_language', methods=['POST'])
-def set_language():
-    global language_code
-    language = request.json.get('language')
-    if language == "english":
-        language_code = "en-US"
-    elif language == "japanese":
-        language_code = "ja-JP"
-    return jsonify({"success": True}), 200
-
+@app.route('/signup', methods=['POST'])
+def signup():
+    id = request.json.get('id')
+    password = request.json.get('password')
+    name = request.json.get('name')
+    if db.users.find_one({"id": id}):
+        return jsonify({"message": "Fail"})
+    else : 
+        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP"})
+        return jsonify({"message":"Success"})
+    
+@app.route('/login', methods=['POST'])
+def login():
+    id = request.json.get('id')
+    password = request.json.get('password')
+    user = db.users.find_one({"id": id, "password": password})
+    if user:
+        return jsonify({"message" : "Success", "id" : id, "name" : user["name"]})
+    else :
+        return jsonify({"message" : "Fail"})
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
     if 'file' not in request.files:
-        return jsonify({"error": "No f ile found"}), 400
-    
+        return jsonify({"error": "No file found"}), 400
+    language_code = request.form.get('languageCode')
     startTime = time.time()
     transcription_text = ""
     file = request.files['file']
@@ -204,7 +207,7 @@ def transcribe_audio():
     endTime = time.time()
     elapse = endTime - startTime
     print("1: ", elapse)
-
+    print(language_code)
     startTime = time.time()
     audio = AudioSegment.from_file(file_path)
     audio = audio.set_frame_rate(48000)
@@ -231,7 +234,7 @@ def transcribe_audio():
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=48000,
-        language_code="en-US",
+        language_code=language_code,
     )
     response = client.recognize(config=config, audio=audio)
     endTime = time.time()
@@ -241,15 +244,16 @@ def transcribe_audio():
     startTime = time.time()
     for result in response.results:
         transcription_text = result.alternatives[0].transcript
-    chat_response = chat(transcription_text)
+    chat_response = chat(transcription_text , language_code)
     endTime = time.time()
     elapse = endTime - startTime
     print("4: ai response", elapse)
-
+    
 
     audio = synthesize_speech_and_upload_to_gcs(chat_response)
 
     return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio}), 200
+
 
 @app.route('/evaluation', methods=['POST'])
 def evaluation():
@@ -276,6 +280,44 @@ def score():
     input2 = input2[0].upper() + input2[1:]
     ratio = SequenceMatcher(None, input,input2 ).ratio()
     return jsonify({"grammer_score" : ratio})
+
+@app.route('/flow_flag', methods=['GET'])
+def get_flow_flag():
+    flow_flag = conversation.get_flow_flag()
+    flow_flag = 1 if flow_flag == 0 else 0
+    conversation.set_flow_flag(flow_flag)
+    return jsonify({'flow_flag': flow_flag})
+
+# @app.route("/get_language", methods=["GET"])
+# def get_language():
+#     return jsonify({"language_code": language_code})
+
+# @app.route('/set_language', methods=['POST'])
+# def set_language():
+#     global language_code
+#     language = request.json.get('language')
+#     if language == "english":
+#         language_code = "en-US"
+#     elif language == "japanese":
+#         language_code = "ja-JP"
+#     return jsonify({"success": True}), 200
+
+
+
+@app.route('/language', methods=['POST'])
+def language():
+    id = request.json.get('id')
+    user = db.users.find_one({"id": id})
+    return jsonify({"language":user['language']}), 200
+
+@app.route('/change_language',methods =['POST'] )
+def change_language():
+    id = request.json.get('id')
+    language = request.json.get('language')
+    db.users.update_one({"id": id}, {"$set": {"language": language}})
+    user = db.users.find_one({"id": id})
+    return jsonify({"language":user['language']}),200
+
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):

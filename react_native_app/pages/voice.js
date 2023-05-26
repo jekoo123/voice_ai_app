@@ -9,7 +9,7 @@ import {
 import { Audio } from "expo-av";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addArray1 } from "../storage/actions";
 import * as FileSystem from "expo-file-system";
 
@@ -18,6 +18,23 @@ export default function VoiceScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [img, setImg] = useState(0);
   const dispatch = useDispatch();
+  const [language , setLanguage] = useState("");
+  const id = useSelector((state) => {
+    return state.id;
+  });
+  useEffect(()=>{
+    getInfo()
+  },[])
+  async function getInfo() {
+    try {
+      const response = await axios.post("http://192.168.0.8:5000/language", {
+        id: id,
+      });
+      setLanguage(response.data.language);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function startRecording() {
     try {
@@ -73,14 +90,17 @@ export default function VoiceScreen() {
         name: "audio.m4a",
         type: "audio/m4a",
       });
+      formData.append('languageCode', language);
+
       const response = await axios.post(
-        "http://192.168.212.72:5000/transcribe",
+        "http://192.168.0.8:5000/transcribe",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
+        
       );
       dispatch(
         addArray1([response.data.sttResponse, response.data.chatResponse])

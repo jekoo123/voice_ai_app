@@ -11,7 +11,7 @@ export default function SettingScreen() {
     { backgroundColor: getRadioButtonColor("english") },
   ]);
 
-  const serverURL = "http://192.168.0.28:5000";
+  const serverURL = "http://192.168.0.8:5000";
 
   useEffect(() => {
     fetchLanguageFromServer();

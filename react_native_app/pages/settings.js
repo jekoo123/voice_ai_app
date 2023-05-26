@@ -1,68 +1,61 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 export default function SettingScreen() {
   const [language, setLanguage] = useState("");
   const [contextMode, setContextMode] = useState(false);
-  const [flowFlag, setFlowFlag] = useState(0); // flow_flag 상태값 추가
-  const [radioButtonStyle, setRadioButtonStyle] = useState([
-    styles.radioButton,
-    { backgroundColor: getRadioButtonColor("english") },
-  ]);
-
-  const serverURL = "http://192.168.212.72:5000";
-
+  const [flowFlag, setFlowFlag] = useState(0);
+  const user_id = useSelector((state) => {
+    return state.id;
+  });
+  const serverURL = "http://192.168.0.8:5000";
   useEffect(() => {
     fetchLanguageFromServer();
   }, []);
 
   const fetchLanguageFromServer = async () => {
     try {
-      const response = await axios.get(`${serverURL}/get_language`);
-      const languageCode = response.data.language_code;
-      setLanguage(languageCode);
-      console.log(languageCode);
-      if (languageCode === "en-US") {
-        console.log("if complete");
-        setRadioButtonStyle([
-          styles.radioButton,
-          { backgroundColor: "#AED6F2" },
-        ]);
-      } else {
-        setRadioButtonStyle([
-          styles.radioButton,
-          { backgroundColor: "#AED6F2" },
-        ]);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const toggleLanguage = (newLanguage) => {
-    setLanguage(newLanguage);
-    sendLanguageToServer(newLanguage);
-  };
-
-  const sendLanguageToServer = async (newLanguage) => {
-    try {
-      await axios.post(`${serverURL}/set_language`, {
-        language: newLanguage,
+      const response = await axios.post(`${serverURL}/language`, {
+        id: user_id,
       });
+      const languageCode = response.data.language;
+      console.log(languageCode);
+      setLanguage(languageCode);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const updateContextMode = (newContextMode) => {
-    setContextMode(newContextMode);
-    setFlowFlag(newContextMode ? 1 : 0);
+  const toggleLanguage = async (language) => {
+    try {
+      const response = await axios.post(`${serverURL}/change_language`,{
+        id : user_id,
+        language : language,
+      });
+      const languageCode = response.data.language;
+      setLanguage(languageCode);
+    } catch (error) {
+      console.log(error);
+    }
   };
+
+  // const toggleLanguage = async (newLanguage) => {
+  //   try {
+  //     setLanguage(newLanguage);
+  //     await axios.post(`${serverURL}/set_language`, {
+  //       language: newLanguage,
+  //     });
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const toggleContextMode = async () => {
-    updateContextMode(!contextMode);
     try {
+      setContextMode(!contextMode);
+      setFlowFlag(contextMode ? 1 : 0);
       await axios.get(`${serverURL}/flow_flag`);
     } catch (error) {
       console.log(error);
@@ -88,36 +81,36 @@ export default function SettingScreen() {
             <TouchableOpacity
               style={[
                 styles.radioButton,
-                { backgroundColor: getRadioButtonColor("english") },
+                { backgroundColor: getRadioButtonColor("en-US") },
               ]}
-              onPress={() => toggleLanguage("english")}
+              onPress={() => toggleLanguage("en-US")}
             >
               <Text
                 style={[
                   styles.radioButtonLabel,
-                  language === "english" && styles.selectedLabel,
+                  language === "en-US" && styles.selectedLabel,
                 ]}
               >
                 English
               </Text>
-              {language === "english" && <View style={styles.radioButtonDot} />}
+              {language === "en-US" && <View style={styles.radioButtonDot} />}
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.radioButton,
-                { backgroundColor: getRadioButtonColor("japanese") },
+                { backgroundColor: getRadioButtonColor("ja-JP") },
               ]}
-              onPress={() => toggleLanguage("japanese")}
+              onPress={() => toggleLanguage("ja-JP")}
             >
               <Text
                 style={[
                   styles.radioButtonLabel,
-                  language === "japanese" && styles.selectedLabel,
+                  language === "ja-JP" && styles.selectedLabel,
                 ]}
               >
                 日本語
               </Text>
-              {language === "japanese" && (
+              {language === "ja-JP" && (
                 <View style={styles.radioButtonDot} />
               )}
             </TouchableOpacity>
@@ -144,20 +137,20 @@ export default function SettingScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen:{
-    flex:1,
-    alignItems:"center",
-    justifyContent:"center",
+  screen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   container: {
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F8E5FF", // Light Purple
     paddingHorizontal: 20,
-    paddingTop:30,
-    paddingBottom:50,
-    borderRadius:20,
-    marginBottom:30,
+    paddingTop: 30,
+    paddingBottom: 50,
+    borderRadius: 20,
+    marginBottom: 30,
   },
   title: {
     fontSize: 30,

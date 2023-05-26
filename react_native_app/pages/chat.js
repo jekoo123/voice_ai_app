@@ -8,8 +8,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setArray1 } from "../storage/actions";
 export default function ChatScreen() {
   const dispatch = useDispatch();
@@ -46,7 +45,7 @@ export default function ChatScreen() {
     const newArray1Promises = data.array1.map(async (e) => {
       if(e.length<3){
         try{
-          const response = await axios.post("http://192.168.212.72:5000/evaluation", { input: e[0] });
+          const response = await axios.post("http://192.168.0.8:5000/evaluation", { input: e[0] });
           return [...e, response.data.grammer];  // updated item with evaluation result
         } catch (error) {
           console.error(error);

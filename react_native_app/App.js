@@ -8,6 +8,9 @@ import Store from "./storage/store";
 import MyScreen from "./pages/My";
 import LogoTitle from "./components/logo_title";
 import SettingScreen from "./pages/settings";
+import LoginScreen from "./pages/login";
+import SignupScreen from "./pages/signup";
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -15,12 +18,14 @@ export default function App() {
     <Provider store={Store}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen}/>
-          <Stack.Screen name="기록" component={ChatScreen}             options={{
-              headerTitle: () => <LogoTitle title="기록" />,
-            }}/>
+          <Stack.Screen name="홈" component={HomeScreen}/>
+          <Stack.Screen name="로그인" component={LoginScreen}/>
+          <Stack.Screen name="회원가입" component={SignupScreen}/>
           <Stack.Screen name="대화" component={VoiceScreen}             options={{
               headerTitle: () => <LogoTitle title="대화" />,
+            }}/>
+          <Stack.Screen name="기록" component={ChatScreen}             options={{
+              headerTitle: () => <LogoTitle title="기록" />,
             }}/>
           <Stack.Screen
             name="MY"

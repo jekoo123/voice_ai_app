@@ -2,10 +2,10 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 export default function HomeScreen({ navigation }) {
   return (
-    <View style={styles.home_container}>
+    <View style={styles.homeContainer}>
       <TouchableOpacity
         style={styles.home}
-        onPress={() => navigation.navigate("대화")}
+        onPress={() => navigation.navigate("로그인")}
       >
         <Text style={styles.buttonText}>Start to Talk</Text>
       </TouchableOpacity>
@@ -14,7 +14,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  home_container : {
+  homeContainer : {
     flex:1,
   },
   home: {

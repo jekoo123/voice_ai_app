@@ -1,6 +1,8 @@
 export const ADD_ARRAY1 = "ADD_ARRAY1";
 export const SET_ARRAY1 = "SET_ARRAY1";
 export const SET_NUMBER = "SET_NUMBER";
+export const SET_ID = "SET_ID";
+
 
 export function addArray1(payload) {
   return { type: ADD_ARRAY1, payload: payload };
@@ -13,3 +15,9 @@ export function setArray1(payload) {
 export function setNumber(payload) {
   return { type: SET_NUMBER, payload: payload };
 }
+
+export function setId(payload) {
+  return { type: SET_ID, payload: payload };
+}
+
+

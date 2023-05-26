@@ -12,7 +12,7 @@ import openai
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = ""
 
 client_file = 'google_stt_key.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
