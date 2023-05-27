@@ -12,6 +12,7 @@ import Toolbar from "../components/toolbar";
 import { useDispatch, useSelector } from "react-redux";
 import { addArray1 } from "../storage/actions";
 import * as FileSystem from "expo-file-system";
+import { useIsFocused } from '@react-navigation/native';
 
 export default function VoiceScreen() {
   const [recording, setRecording] = useState();
@@ -19,18 +20,25 @@ export default function VoiceScreen() {
   const [img, setImg] = useState(0);
   const dispatch = useDispatch();
   const [language , setLanguage] = useState("");
+  const isFocused = useIsFocused();
+
   const id = useSelector((state) => {
     return state.id;
   });
   useEffect(()=>{
-    getInfo()
-  },[])
-  async function getInfo() {
+    getInfo();
+  },[isFocused])
+
+  const getInfo = async () => {
+    console.log("getInfo1");
+
     try {
       const response = await axios.post("http://192.168.0.8:5000/language", {
         id: id,
       });
       setLanguage(response.data.language);
+      console.log("voiceScreen",response.data.language);
+      console.log("getInfo");
     } catch (error) {
       console.error(error);
     }

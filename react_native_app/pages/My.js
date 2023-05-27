@@ -7,7 +7,11 @@ import words from "../assets/words";
 
 export default function MyScreen() {
   const [daysentence, setDaysentence] = useState(words[0]);
-
+  useEffect(() => {
+    if (data) {
+      receiveScore();
+    }
+  }, []);
   let previousIndex = -1;
   function printNextProverb() {
     const currentDate = new Date();
@@ -22,11 +26,7 @@ export default function MyScreen() {
   const data = useSelector((state) => {
     return state;
   });
-  useEffect(() => {
-    if (data) {
-      receiveScore();
-    }
-  }, []);
+
   const [grammer_score, setGrammer_score] = useState(0);
   const receiveScore = async () => {
     try {

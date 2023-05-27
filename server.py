@@ -45,14 +45,14 @@ class Conversation:
 
 conversation = Conversation()
 
-def synthesize_speech_and_upload_to_gcs(text):
+def synthesize_speech(text, language_code):
     startTime= time.time()
     client = texttospeech.TextToSpeechClient(credentials=credentials)
 
     synthesis_input = texttospeech.SynthesisInput(text=text)
 
     voice = texttospeech.VoiceSelectionParams(
-        language_code="en-US", 
+        language_code=language_code, 
         ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
     )
 
@@ -250,7 +250,7 @@ def transcribe_audio():
     print("4: ai response", elapse)
     
 
-    audio = synthesize_speech_and_upload_to_gcs(chat_response)
+    audio = synthesize_speech(chat_response, language_code)
 
     return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio}), 200
 
