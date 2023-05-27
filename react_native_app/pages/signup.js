@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { StyleSheet, View, TextInput, Button, Alert } from "react-native";
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert } from "react-native";
 import axios from "axios";
 
-export default function SignupScreen({navigation}) {
+export default function SignupScreen({ navigation }) {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,7 +15,7 @@ export default function SignupScreen({navigation}) {
       setConfirmPassword("");
       return;
     }
-    const response = await axios.post("http://192.168.0.8:5000/signup", {
+    const response = await axios.post("http://192.168.0.32:5000/signup", {
       id: id,
       password: password,
       name: name,
@@ -34,33 +34,41 @@ export default function SignupScreen({navigation}) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        value={id}
-        onChangeText={(text) => setId(text)}
-        placeholder={"ID"}
-        style={styles.input}
-      />
-      <TextInput
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        placeholder={"Password"}
-        secureTextEntry={true}
-        style={styles.input}
-      />
-      <TextInput
-        value={confirmPassword}
-        onChangeText={(text) => setConfirmPassword(text)}
-        placeholder={"Confirm Password"}
-        secureTextEntry={true}
-        style={styles.input}
-      />
-      <TextInput
-        value={name}
-        onChangeText={(text) => setName(text)}
-        placeholder={"Name"}
-        style={styles.input}
-      />
-      <Button title={"Signup"} onPress={onSignupPress} />
+      <View style={styles.frame}>
+        <TextInput
+          value={id}
+          onChangeText={(text) => setId(text)}
+          placeholder={"ID"}
+          style={styles.input}
+        />
+        <TextInput
+          value={password}
+          onChangeText={(text) => setPassword(text)}
+          placeholder={"Password"}
+          secureTextEntry={true}
+          style={styles.input}
+        />
+        <TextInput
+          value={confirmPassword}
+          onChangeText={(text) => setConfirmPassword(text)}
+          placeholder={"Confirm Password"}
+          secureTextEntry={true}
+          style={styles.input}
+        />
+        <TextInput
+          value={name}
+          onChangeText={(text) => setName(text)}
+          placeholder={"Name"}
+          style={styles.input}
+        />
+      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={onSignupPress}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.buttonText}>회원가입</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -70,12 +78,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#F5F5F5",
+  },
+  frame: {
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: "#CCCCCC",
+    backgroundColor: "#FFFFFF",
+    padding: 10,
+    marginBottom: 20,
   },
   input: {
-    width: 200,
+    width: 250,
     height: 40,
     borderWidth: 1,
+    borderRadius: 5,
     padding: 10,
-    margin: 10,
+    marginVertical: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  button: {
+    width: 250,
+    height: 40,
+    backgroundColor: "#FDF5E6",
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#708090",
+    fontWeight: "bold",
   },
 });
+
+
