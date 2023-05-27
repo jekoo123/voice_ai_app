@@ -5,6 +5,8 @@ import Toolbar from "../components/toolbar";
 import { useSelector } from "react-redux";
 import words from "../assets/words";
 
+import * as Progress from 'react-native-progress';
+
 export default function MyScreen() {
   const [daysentence, setDaysentence] = useState(words[0]);
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function MyScreen() {
   const receiveScore = async () => {
     try {
       const promises = data.array1.map((e) =>
-        axios.post("http://192.168.0.8:5000/score", {
+        axios.post("http://192.168.0.32:5000/score", {
           input: e[0],
           input2: e[2],
         })
@@ -46,36 +48,7 @@ export default function MyScreen() {
       console.error(error);
     }
   };
-  // const [grammer_score_sum,setGrammer_score_sum]= useState(0);
-  // const receiveScore = async () => {
-  //   try {
-  //     const promises = data.array1.map((e) =>
-  //       axios.post("http://192.168.28.72:5000/score", {
-  //         input: e[0],
-  //         input2: e[2],
-  //       })
-  //     );
-  //     const results = await Promise.all(promises);
-  //     setGrammer_score_sum(results.reduce((accumulator, currentValue) => {
-  //       return accumulator + currentValue.data.grammer_score;
-  //     }, 0));
-  //     // const newArray1 = data.array1.map((item, index) => [
-  //     //   ...item,
-  //     //   results[index].data.grammer_score,
-  //     // ]);
-  //     // const arrayWithMaxScore = newArray1.reduce(
-  //     //   (maxArray, currentArray) =>
-  //     //     currentArray[currentArray.length - 1] > maxArray[maxArray.length - 1]
-  //     //       ? currentArray
-  //     //       : maxArray,
-  //     //   [0, 0, 0]
-  //     // );
-  //     // setMySentence(arrayWithMaxScore[0]);
-  //     // console.log("at my", mySentence);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+
   return (
     <View style={styles.container}>
       <View style={styles.contentsContainer}>
@@ -86,7 +59,15 @@ export default function MyScreen() {
         </View>
         <View style={styles.scoreContainer}>
           <Text style={styles.title}>점수</Text>
-          <Text>문법 점수 : {grammer_score}</Text>
+          <Text>문법 점수 : {Math.floor(grammer_score*100)/10}</Text>
+          <Progress.Bar progress={grammer_score} width={200} color="#FFB14E" />
+          <Text>문맥 점수 : {Math.floor(grammer_score*100)/10}</Text>
+          <Progress.Bar progress={grammer_score} width={200} color="#FFB14E" />
+          <Text>발음 점수 : {Math.floor(grammer_score*100)/10}</Text>
+          <Progress.Bar progress={grammer_score} width={200} color="#FFB14E" />
+        </View>
+        <View style={styles.memoContainer}>
+          <Text style={styles.title}>단어장</Text>
         </View>
       </View>
       <View style={styles.toolbarContainer}>
@@ -105,10 +86,9 @@ const styles = StyleSheet.create({
   },
   contentsContainer: {
     flex: 0.9,
-    justifyContent: "flex-start",
+    justifyContent: "space-between",
     alignItems: "center",
   },
-
   todayContainer: {
     backgroundColor: "#FFE4AF",
     borderRadius: 10,
@@ -119,7 +99,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 800,
+    fontWeight: "800",
     letterSpacing: 4,
     textAlign: "center",
   },
@@ -128,4 +108,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 18,
   },
+  scoreContainer: {
+    backgroundColor: "#FAEBD7",
+    borderRadius: 10,
+    marginTop: 20,
+    padding: 20,
+    width: 327,
+    alignItems: "center",
+  },
+  memoContainer: {
+    backgroundColor: "#FDF6E7",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 20,
+    width: 327,
+  }
 });
