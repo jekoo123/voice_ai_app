@@ -255,19 +255,31 @@ def transcribe_audio():
     return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio}), 200
 
 
-@app.route('/evaluation', methods=['POST'])
+@app.route('/evaluation', methods=['POST']) # evaluation 
 def evaluation():
     input = request.json.get('input')
+    
+    language = request.json.get('language')  # None으로 출력되는 에러 
+
+    print("input: ", input)
+    print("language: ",language)
     response = openai.Completion.create(
             model="text-davinci-003",
-            prompt=f"Correct this to standard English:\n\n {input}",
+            prompt=f"Correct grammer in standard {language}:\n\n {input}",
             temperature=0,
             max_tokens=60,
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.0
         )
-    return jsonify({"grammer": response.choices[0].text.strip()})
+    
+    output = response.choices[0].text.strip().split('\n')
+
+    if len(output) <= 2:
+        return jsonify({"grammer": output[0]})
+    else:
+        return jsonify({"grammer": output[2]})
+
 
 @app.route('/score', methods=['POST'])
 def score():
