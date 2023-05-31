@@ -267,7 +267,7 @@ def transcribe_audio():
 
 
 
-@app.route('/evaluation', methods=['POST'])
+@app.route('/evaluation', methods=['POST']) # evaluation 
 def evaluation():
     input = request.json.get('input')
     id = request.json.get('id')
@@ -287,8 +287,6 @@ def evaluation():
         return jsonify({"grammer": output[0]})
     else:
         return jsonify({"grammer": output[2]})
-
-
 
 @app.route('/score', methods=['POST'])
 def score():
