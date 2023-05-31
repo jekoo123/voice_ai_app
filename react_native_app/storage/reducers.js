@@ -39,13 +39,7 @@ function rootReducer(state = initialState, action) {
     case SET_ID:
       return { ...state, id: action.payload };
     case SAVE_SENTENCE:
-      if (
-        state.save.find(
-          (sentence) =>
-            sentence[0] === action.payload[0] &&
-            sentence[1] === action.payload[1]
-        )
-      ) {
+      if (state.save.includes(action.payload)) {
         return state;
       } else {
         return {
