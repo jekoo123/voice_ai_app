@@ -11,7 +11,7 @@ import SettingScreen from "./pages/settings";
 import LoginScreen from "./pages/login";
 import SignupScreen from "./pages/signup";
 import ShopScreen from "./pages/shop";
-
+import ListScreen from "./pages/list";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -50,7 +50,14 @@ export default function App() {
               headerTitle: () => <LogoTitle title="상점" />,
             }}
           />
-
+          <Stack.Screen
+            name="나의 문장"
+            component={ListScreen}
+            options={{
+              headerTitle: () => <LogoTitle title="나의 문장" />,
+            }}
+          />
+          
           <Stack.Screen name="설정" component={SettingScreen} />
         </Stack.Navigator>
       </NavigationContainer>

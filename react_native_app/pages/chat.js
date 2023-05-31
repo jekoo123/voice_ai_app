@@ -20,30 +20,11 @@ export default function ChatScreen() {
     return state;
   });
 
-  //to 동진
-  // const data = useSelector((state) => {
-  //   return state.number;
-  // });
-  //if numver ->  data = 1 or 0
-
   useEffect(() => {
     if (data.array1.length > 0) {
       submitAllMessages();
     }
-    // console.log('charScreen:21', data);
   }, []);
-
-  // useEffect(() => {
-  //   const updateData = async () => {
-  //     dispatch(deleteALL());
-  //     for (const item of evaluation) {
-  //       await dispatch(addToMyData(item));
-  //     }
-  //   };
-  //   if (evaluation.length > 0) {
-  //     updateData();
-  //   }
-  // }, [evaluation]);
 
   const submitAllMessages = async () => {
     const newArray1Promises = data.array1.map(async (e) => {
@@ -70,16 +51,22 @@ export default function ChatScreen() {
 
   const renderItem = ({ item }) => {
     const handleSave = () => {
-      dispatch(saveSentence([item[0], item[3]]));
+      dispatch(saveSentence(item[3]));
     };
-
 
     return (
       <View style={styles.scroll}>
         <View style={styles.MyTextBoxContainer}>
           <View style={styles.MyTextBox}>
+            <Text style={styles.textTitle}>Me</Text>
+
+            <Text style={styles.text}>{item[0]}</Text>
+          </View>
+        </View>
+        <View style={styles.EvaluationTextBoxContainer}>
+          <View style={styles.EvaluationTextBox}>
             <View style={styles.textBoxHeader}>
-              <Text style={styles.textTitle}>Me</Text>
+              <Text style={styles.EvaluationTextTitle}>Revised Sentence</Text>
               <TouchableOpacity onPress={handleSave}>
                 <Icon
                   style={styles.icon}
@@ -88,7 +75,7 @@ export default function ChatScreen() {
                   color={
                     data.save.find(
                       (sentence) =>
-                        sentence[0] === item[0] && sentence[1] === item[3]
+                        sentence === item[3]
                     )
                       ? "blue"
                       : "black"
@@ -96,12 +83,6 @@ export default function ChatScreen() {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.text}>{item[0]}</Text>
-          </View>
-        </View>
-        <View style={styles.EvaluationTextBoxContainer}>
-          <View style={styles.EvaluationTextBox}>
-            <Text style={styles.EvaluationTextTitle}>Revised Sentence</Text>
             <Text style={styles.text}>{item[3]}</Text>
           </View>
         </View>
@@ -118,18 +99,6 @@ export default function ChatScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.listContainer}>
-        {/* <View style={styles.selectEvaluationContainer}>
-          <TouchableOpacity style={styles.selectEvaluation}>
-            <Text style={styles.selectText}>문법</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.selectEvaluation}>
-            <Text style={styles.selectText}>문맥</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.selectEvaluation}>
-            <Text style={styles.selectText}>발음</Text>
-          </TouchableOpacity>
-        </View> */}
-
         <FlatList
           data={evaluation}
           renderItem={renderItem}
@@ -225,62 +194,4 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "white",
   },
-  // selectEvaluationContainer: {
-  //   position: "absolute",
-  //   top: 10,
-  //   flexDirection: "row",
-  //   alignItems: "center",
-  //   paddingHorizontal: 5,
-  //   zIndex: 1,
-  // },
-  // selectEvaluation: {
-  //   paddingHorizontal: 10,
-  //   paddingVertical: 10,
-  //   borderWidth: 0.5,
-  //   marginHorizontal: 1,
-  //   borderRadius: 10,
-  //   backgroundColor: "#D6FFF3",
-  // },
-  // selectText: {
-  //   textAlign: "center",
-  //   fontSize: 15,
-  // },
 });
-
-// export default function ChatScreen({ route }) {
-//   const { chatdata } = route.params;
-//   return (
-//     <View style={styles.container}>
-//       <FlatList
-//         data={chatdata}
-//         keyExtractor={(item, index) => index.toString()}
-//         renderItem={({ item }) => (
-//           <View style={styles.chatItem}>
-//             <Text style={styles.inputText}>{item.input}</Text>
-//             <Text style={styles.responseText}>{item.response}</Text>
-//           </View>
-//         )}
-//       />
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     paddingHorizontal: 20,
-//     paddingTop: 20,
-//   },
-//   chatItem: {
-//     marginBottom: 10,
-//   },
-//   inputText: {
-//     fontSize: 16,
-//     fontWeight: "bold",
-//     marginBottom: 5,
-//   },
-//   responseText: {
-//     fontSize: 16,
-//     marginLeft: 20,
-//   },
-// });
