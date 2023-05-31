@@ -26,25 +26,6 @@ cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.
 db = cluster["voice_ai_app"]
 
 
-class Conversation:
-    def __init__(self):
-        self.flow_flag = 0
-        self.context = ""
-
-    def set_flow_flag(self, flag):
-        self.flow_flag = flag
-
-    def get_flow_flag(self):
-        return self.flow_flag
-
-    def append_context(self, user_input, ai_response):
-        self.context += f"User: {user_input}\nAI: {ai_response}\n"
-
-    def reset_context(self):
-        self.context = ""
-
-conversation = Conversation()
-
 def synthesize_speech(text, language_code):
     startTime= time.time()
     client = texttospeech.TextToSpeechClient(credentials=credentials)
@@ -118,12 +99,29 @@ def synthesize_speech(text, language_code):
 #     return blob.public_url
 
 
-def chat(user_input, language_code):
+# class Conversation:
+#     def __init__(self):
+#         self.flow_flag = 0
+#         self.context = ""
+
+#     def set_flow_flag(self, flag):
+#         self.flow_flag = flag
+
+#     def get_flow_flag(self):
+#         return self.flow_flag
+
+#     def append_context(self, user_input, ai_response):
+#         self.context += f"User: {user_input}\nAI: {ai_response}\n"
+
+#     def reset_context(self):
+#         self.context = ""
+
+# conversation = Conversation()
+
+def chat(user_input, language_code , contextMode , early):
+    
     try:
-        flow_flag = conversation.get_flow_flag()
-        print(f"Current flow_flag value: {flow_flag}")
-        if flow_flag == 1:  # 문맥용 대화 실행문구
-            conversation.set_flow_flag(2)
+        if int(contextMode) == 1:  # 문맥용 대화 실행문구
             response = openai.Completion.create(
                 engine="text-davinci-003",
                 prompt=f"Let's set random situation and engage in talk with me. \nUse language {language_code}",
@@ -135,14 +133,14 @@ def chat(user_input, language_code):
                 n=1,
                 stop=["User:"],
             )
+            print("you")
+
             ai_response = response.choices[0].text.strip()
-            conversation.append_context(user_input, ai_response)
             return ai_response
-        elif flow_flag == 2:  # 문맥용 대화 중
-            conversation.append_context(user_input, "")
+        elif int(contextMode) == 2:  # 문맥용 대화 중
             response = openai.Completion.create(
                 engine="text-davinci-003",
-                prompt=conversation.context,
+                prompt=early + f"User: {user_input}\nAI: ""\n",
                 temperature=0.2,
                 max_tokens=1500,
                 top_p=1.0,
@@ -151,8 +149,8 @@ def chat(user_input, language_code):
                 n=1,
                 stop=["User:"],
             )
+            print("context number 2")
             ai_response = response.choices[0].text.strip()
-            conversation.append_context(user_input, ai_response)
             return ai_response
         else:  # 일반 대화
             response = openai.Completion.create(
@@ -166,12 +164,15 @@ def chat(user_input, language_code):
                 n=1,
                 stop=["User:"],
             )
+            print("love")
             ai_response = response.choices[0].text.strip()
             return ai_response
 
     except Exception as e:
         return str(e)
-    
+
+
+
 @app.route('/signup', methods=['POST'])
 def signup():
     id = request.json.get('id')
@@ -180,7 +181,7 @@ def signup():
     if db.users.find_one({"id": id}):
         return jsonify({"message": "Fail"})
     else : 
-        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP"})
+        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 })
         return jsonify({"message":"Success"})
     
 @app.route('/login', methods=['POST'])
@@ -198,8 +199,14 @@ def transcribe_audio():
     if 'file' not in request.files:
         return jsonify({"error": "No file found"}), 400
     language_code = request.form.get('languageCode')
+    contextMode = request.form.get('contextMode')
+    print(contextMode)
     startTime = time.time()
     transcription_text = ""
+    pronunciation = 0
+    early=""
+    if contextMode ==2:
+        early = request.form.get('early')
     file = request.files['file']
     filename = secure_filename(file.filename)
     file_path = os.path.join("uploads", filename)
@@ -217,10 +224,7 @@ def transcribe_audio():
     endTime = time.time()
     elapse = endTime - startTime
     print("2: ", elapse)
-
-
     startTime = time.time()
-
     with open(file_path, "rb") as audio_file:
         content = audio_file.read()
         audio = speech.RecognitionAudio(content=content)
@@ -242,9 +246,16 @@ def transcribe_audio():
     print("3-1: stt ", elapse)
 
     startTime = time.time()
+    print("array")
+    print(response.results)
     for result in response.results:
+        print("element")
+        print(result);
         transcription_text = result.alternatives[0].transcript
-    chat_response = chat(transcription_text , language_code)
+        pronunciation = result.alternatives[0].confidence
+
+
+    chat_response = chat(transcription_text , language_code , contextMode, early)
     endTime = time.time()
     elapse = endTime - startTime
     print("4: ai response", elapse)
@@ -252,22 +263,32 @@ def transcribe_audio():
 
     audio = synthesize_speech(chat_response, language_code)
 
-    return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio}), 200
+    return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio, "pronunciation" : pronunciation}), 200
+
 
 
 @app.route('/evaluation', methods=['POST'])
 def evaluation():
     input = request.json.get('input')
+    id = request.json.get('id')
+    user = db.users.find_one({"id": id})
+    language = user['language']
     response = openai.Completion.create(
             model="text-davinci-003",
-            prompt=f"Correct this to standard English:\n\n {input}",
+            prompt=f"Correct grammer in standard {language}:\n\n {input}",
             temperature=0,
             max_tokens=60,
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.0
         )
-    return jsonify({"grammer": response.choices[0].text.strip()})
+    output = response.choices[0].text.strip().split('\n')
+    if len(output) <= 2:
+        return jsonify({"grammer": output[0]})
+    else:
+        return jsonify({"grammer": output[2]})
+
+
 
 @app.route('/score', methods=['POST'])
 def score():
@@ -281,34 +302,11 @@ def score():
     ratio = SequenceMatcher(None, input,input2 ).ratio()
     return jsonify({"grammer_score" : ratio})
 
-@app.route('/flow_flag', methods=['GET'])
-def get_flow_flag():
-    flow_flag = conversation.get_flow_flag()
-    flow_flag = 1 if flow_flag == 0 else 0
-    conversation.set_flow_flag(flow_flag)
-    return jsonify({'flow_flag': flow_flag})
-
-# @app.route("/get_language", methods=["GET"])
-# def get_language():
-#     return jsonify({"language_code": language_code})
-
-# @app.route('/set_language', methods=['POST'])
-# def set_language():
-#     global language_code
-#     language = request.json.get('language')
-#     if language == "english":
-#         language_code = "en-US"
-#     elif language == "japanese":
-#         language_code = "ja-JP"
-#     return jsonify({"success": True}), 200
-
-
-
-@app.route('/language', methods=['POST'])
+@app.route('/init', methods=['POST'])
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
-    return jsonify({"language":user['language']}), 200
+    return jsonify({"language":user['language'] , "context": user['contextMode']}), 200
 
 @app.route('/change_language',methods =['POST'] )
 def change_language():
@@ -317,6 +315,20 @@ def change_language():
     db.users.update_one({"id": id}, {"$set": {"language": language}})
     user = db.users.find_one({"id": id})
     return jsonify({"language":user['language']}),200
+
+
+
+    
+@app.route('/flow_flag', methods=['POST'])
+def get_flow_flag():
+    id = request.json.get('id')
+    flow_flag = request.json.get('flow_flag')
+    print("in /flow_flag", flow_flag)
+    db.users.update_one({"id": id}, {"$set": {"contextMode": flow_flag}})
+    
+    user = db.users.find_one({"id": id})
+    print("in db",user['contextMode'])
+    return jsonify({"contextMode":user['contextMode']}),200
 
 
 if __name__ == '__main__':

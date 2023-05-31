@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SERVER_IP } from "../config";
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert } from "react-native";
 import axios from "axios";
 
@@ -15,7 +16,7 @@ export default function SignupScreen({ navigation }) {
       setConfirmPassword("");
       return;
     }
-    const response = await axios.post("http://192.168.0.32:5000/signup", {
+    const response = await axios.post(`${SERVER_IP}/signup`, {
       id: id,
       password: password,
       name: name,

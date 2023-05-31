@@ -215,7 +215,7 @@ export default function MyScreen() {
   const receiveScore = async () => {
     try {
       const promises = data.array1.map((e) =>
-        axios.post("http://192.168.0.10:5000/score", {
+        axios.post("http://192.168.62.72:5000/score", {
           input: e[0],
           input2: e[2],
         })

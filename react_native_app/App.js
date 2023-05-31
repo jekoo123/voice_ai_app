@@ -10,6 +10,7 @@ import LogoTitle from "./components/logo_title";
 import SettingScreen from "./pages/settings";
 import LoginScreen from "./pages/login";
 import SignupScreen from "./pages/signup";
+import ShopScreen from "./pages/shop";
 
 const Stack = createStackNavigator();
 
@@ -18,15 +19,23 @@ export default function App() {
     <Provider store={Store}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="홈" component={HomeScreen}/>
-          <Stack.Screen name="로그인" component={LoginScreen}/>
-          <Stack.Screen name="회원가입" component={SignupScreen}/>
-          <Stack.Screen name="대화" component={VoiceScreen}             options={{
+          <Stack.Screen name="홈" component={HomeScreen} />
+          <Stack.Screen name="로그인" component={LoginScreen} />
+          <Stack.Screen name="회원가입" component={SignupScreen} />
+          <Stack.Screen
+            name="대화"
+            component={VoiceScreen}
+            options={{
               headerTitle: () => <LogoTitle title="대화" />,
-            }}/>
-          <Stack.Screen name="기록" component={ChatScreen}             options={{
+            }}
+          />
+          <Stack.Screen
+            name="기록"
+            component={ChatScreen}
+            options={{
               headerTitle: () => <LogoTitle title="기록" />,
-            }}/>
+            }}
+          />
           <Stack.Screen
             name="MY"
             component={MyScreen}
@@ -34,6 +43,14 @@ export default function App() {
               headerTitle: () => <LogoTitle title="MY" />,
             }}
           />
+          <Stack.Screen
+            name="상점"
+            component={ShopScreen}
+            options={{
+              headerTitle: () => <LogoTitle title="상점" />,
+            }}
+          />
+
           <Stack.Screen name="설정" component={SettingScreen} />
         </Stack.Navigator>
       </NavigationContainer>

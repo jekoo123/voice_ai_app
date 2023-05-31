@@ -16,37 +16,28 @@ export default function Toolbar() {
       style={styles.style_Toolbar}
       source={require("../assets/Toolbar.png")}
     >
-      <TouchableOpacity
-    
-        onPress={() => navigation.navigate("대화")}
-      >
+      <TouchableOpacity onPress={() => navigation.navigate("대화")}>
         <Image
           style={styles.style_chat_img}
           source={require("../assets/Chat_img.png")}
         />
         <Text style={styles.text}>대화</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-    
-        onPress={() => navigation.navigate("기록")}
-      >
+      <TouchableOpacity onPress={() => navigation.navigate("기록")}>
         <Image
           style={styles.style_chat_img}
           source={require("../assets/Log_img.png")}
         />
         <Text style={styles.text}>로그</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-    
-        onPress={() => navigation.navigate("MY")}
-      >
+      <TouchableOpacity onPress={() => navigation.navigate("MY")}>
         <Image
           style={styles.style_chat_img}
           source={require("../assets/My_img.png")}
         />
         <Text style={styles.text}>마이</Text>
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("상점")}>
         <Image
           style={styles.style_chat_img}
           source={require("../assets/Shop_img.png")}
@@ -63,7 +54,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     paddingTop: 15,
-    paddingBottom:10,
+    paddingBottom: 10,
   },
   text: {
     textAlign: "center",

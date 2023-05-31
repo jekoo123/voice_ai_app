@@ -1,4 +1,5 @@
 import { React, useState, useEffect } from "react";
+import { SERVER_IP } from "../config";
 import {
   View,
   Text,
@@ -6,24 +7,27 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch, useSelector } from "react-redux";
-import { setArray1 } from "../storage/actions";
+import { setArray1, saveSentence } from "../storage/actions";
 export default function ChatScreen() {
   const dispatch = useDispatch();
   const [evaluation, setEvaluation] = useState([]);
+
   const data = useSelector((state) => {
     return state;
   });
+
   //to 동진
   // const data = useSelector((state) => {
   //   return state.number;
   // });
   //if numver ->  data = 1 or 0
-  console.log(data.array1)
+
   useEffect(() => {
-    if (data.array1) {
+    if (data.array1.length > 0) {
       submitAllMessages();
     }
     // console.log('charScreen:21', data);
@@ -43,88 +47,78 @@ export default function ChatScreen() {
 
   const submitAllMessages = async () => {
     const newArray1Promises = data.array1.map(async (e) => {
-      if(e.length<3){
-        try{
-          const response = await axios.post("http://192.168.0.8:5000/evaluation", { input: e[0] });
-          return [...e, response.data.grammer];  // updated item with evaluation result
+      if (e.length < 4) {
+        try {
+          const response = await axios.post(`${SERVER_IP}/evaluation`, {
+            input: e[0],
+            id: data.id,
+          });
+          return [...e, response.data.grammer];
         } catch (error) {
           console.error(error);
-          return e;  // if error occurs, return original item
+          return e;
         }
       } else {
-        return e;  // if item already has evaluation result, return original item
+        return e;
       }
     });
-  
+
     const newArray1 = await Promise.all(newArray1Promises);
     setEvaluation(newArray1);
     dispatch(setArray1(newArray1));
   };
-  // const submitAllMessages = async () => {
-  
-  //   const newArray1 = data.array1.map(async (e) => {
-  //     if(e.length<3){
-  //       try{
-  //         const response = await axios.post("http://192.168.28.72:5000/evaluation", { input: e[0] });
-  //         e.push(response.data.grammer)
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
 
-  //     }
+  const renderItem = ({ item }) => {
+    const handleSave = () => {
+      dispatch(saveSentence([item[0], item[3]]));
+    };
 
-  //   })
-  //   setEvaluation(newArray1);
 
-  //   dispatch(setArray1(newArray1));
-  //   // try {
-  //   //   const promises = data.array1.map((e) =>
-  //   //     axios.post("http://192.168.28.72:5000/evaluation", { input: e[0] })
-  //   //   );
-  //   //   const results = await Promise.all(promises);
-
-  //   //   const newArray1 = data.array1.map((item, index) => [
-  //   //     ...item,
-  //   //     results[index].data.grammer,
-  //   //   ]);
-  //   //   setEvaluation(newArray1);
-
-  //   //   dispatch(setArray1(newArray1));
-  //   //   // dispatch(1);
-  //   //   console.log("at chat", data.array1)
-  //   // } catch (error) {
-  //   //   console.error(error);
-  //   // }
-  // };
-  // // console.log(evaluation);
-
-  const renderItem = ({ item }) => (
-    <View style={styles.scroll}>
-      <View style={styles.MyTextBoxContainer}>
-        <View style={styles.MyTextBox}>
-          <Text style={styles.textTitle}>Me</Text>
-          <Text style={styles.text}>{item[0]}</Text>
+    return (
+      <View style={styles.scroll}>
+        <View style={styles.MyTextBoxContainer}>
+          <View style={styles.MyTextBox}>
+            <View style={styles.textBoxHeader}>
+              <Text style={styles.textTitle}>Me</Text>
+              <TouchableOpacity onPress={handleSave}>
+                <Icon
+                  style={styles.icon}
+                  name="save-outline"
+                  size={27}
+                  color={
+                    data.save.find(
+                      (sentence) =>
+                        sentence[0] === item[0] && sentence[1] === item[3]
+                    )
+                      ? "blue"
+                      : "black"
+                  }
+                />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.text}>{item[0]}</Text>
+          </View>
+        </View>
+        <View style={styles.EvaluationTextBoxContainer}>
+          <View style={styles.EvaluationTextBox}>
+            <Text style={styles.EvaluationTextTitle}>Revised Sentence</Text>
+            <Text style={styles.text}>{item[3]}</Text>
+          </View>
+        </View>
+        <View>
+          <View style={styles.AiTextBox}>
+            <Text style={styles.textTitle}>AI</Text>
+            <Text style={styles.text}>{item[1]}</Text>
+          </View>
         </View>
       </View>
-      <View style={styles.EvaluationTextBoxContainer}>
-        <View style={styles.EvaluationTextBox}>
-          <Text style={styles.EvaluationTextTitle}>Correct Grammer</Text>
-          <Text style={styles.text}>{item[2]}</Text>
-        </View>
-      </View>
-      <View>
-        <View style={styles.AiTextBox}>
-          <Text style={styles.textTitle}>AI</Text>
-          <Text style={styles.text}>{item[1]}</Text>
-        </View>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.listContainer}>
-        <View style={styles.selectEvaluationContainer}>
+        {/* <View style={styles.selectEvaluationContainer}>
           <TouchableOpacity style={styles.selectEvaluation}>
             <Text style={styles.selectText}>문법</Text>
           </TouchableOpacity>
@@ -134,7 +128,7 @@ export default function ChatScreen() {
           <TouchableOpacity style={styles.selectEvaluation}>
             <Text style={styles.selectText}>발음</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
         <FlatList
           data={evaluation}
@@ -173,6 +167,18 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     marginHorizontal: 20,
   },
+  textBoxHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  icon: {
+    position: "relative",
+    bottom: 4,
+    width: 25,
+  },
+
   AiTextBox: {
     backgroundColor: "#DAC2FC",
     width: 200,
@@ -219,26 +225,26 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "white",
   },
-  selectEvaluationContainer: {
-    position: "absolute",
-    top: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 5,
-    zIndex: 1,
-  },
-  selectEvaluation: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderWidth: 0.5,
-    marginHorizontal: 1,
-    borderRadius: 10,
-    backgroundColor: "#D6FFF3",
-  },
-  selectText: {
-    textAlign: "center",
-    fontSize: 15,
-  },
+  // selectEvaluationContainer: {
+  //   position: "absolute",
+  //   top: 10,
+  //   flexDirection: "row",
+  //   alignItems: "center",
+  //   paddingHorizontal: 5,
+  //   zIndex: 1,
+  // },
+  // selectEvaluation: {
+  //   paddingHorizontal: 10,
+  //   paddingVertical: 10,
+  //   borderWidth: 0.5,
+  //   marginHorizontal: 1,
+  //   borderRadius: 10,
+  //   backgroundColor: "#D6FFF3",
+  // },
+  // selectText: {
+  //   textAlign: "center",
+  //   fontSize: 15,
+  // },
 });
 
 // export default function ChatScreen({ route }) {

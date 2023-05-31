@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { SERVER_IP } from "../config";
+import { setId } from "../storage/actions";
+import { setContext } from "../storage/actions";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SettingScreen() {
   const [language, setLanguage] = useState("");
-  const [contextMode, setContextMode] = useState(false);
   const [flowFlag, setFlowFlag] = useState(0);
+  const dispatch = useDispatch();
   const user_id = useSelector((state) => {
     return state.id;
   });
-  const serverURL = "http://192.168.0.8:5000";
+
   useEffect(() => {
     fetchLanguageFromServer();
   }, []);
 
   const fetchLanguageFromServer = async () => {
     try {
-      const response = await axios.post(`${serverURL}/language`, {
+      const response = await axios.post(`${SERVER_IP}/init`, {
         id: user_id,
       });
-      const languageCode = response.data.language;
-      console.log(languageCode);
-      setLanguage(languageCode);
+      setLanguage(response.data.language);
+      setFlowFlag(response.data.context);
     } catch (error) {
       console.log(error);
     }
@@ -30,37 +34,44 @@ export default function SettingScreen() {
 
   const toggleLanguage = async (language) => {
     try {
-      const response = await axios.post(`${serverURL}/change_language`,{
-        id : user_id,
-        language : language,
+      const response = await axios.post(`${SERVER_IP}/change_language`, {
+        id: user_id,
+        language: language,
       });
-      const languageCode = response.data.language;
-      setLanguage(languageCode);
+      setLanguage(response.data.language);
     } catch (error) {
       console.log(error);
     }
   };
 
-  // const toggleLanguage = async (newLanguage) => {
-  //   try {
-  //     setLanguage(newLanguage);
-  //     await axios.post(`${serverURL}/set_language`, {
-  //       language: newLanguage,
-  //     });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
-  const toggleContextMode = async () => {
+  const toggleFlowFlag = async (flag) => {
     try {
-      setContextMode(!contextMode);
-      setFlowFlag(contextMode ? 1 : 0);
-      await axios.get(`${serverURL}/flow_flag`);
+      const response = await axios.post(`${SERVER_IP}/flow_flag`, {
+        id: user_id,
+        flow_flag: flag,
+      });
+      setFlowFlag(response.data.contextMode);
+      dispatch(setContext(flowFlag));
     } catch (error) {
       console.log(error);
     }
   };
+
+  // function getRadioButtonColor(selectedLanguage, selectedFlowFlag) {
+  //   if (selectedLanguage) {
+  //     if (language === selectedLanguage) {
+  //       return "#AED6F1";
+  //     } else {
+  //       return "#F1F1F1";
+  //     }
+  //   } else {
+  //     if (flowFlag === selectedFlowFlag) {
+  //       return "#AED6F1";
+  //     } else {
+  //       return "#F1F1F1";
+  //     }
+  //   }
+  // }
 
   function getRadioButtonColor(selectedLanguage) {
     if (language === selectedLanguage) {
@@ -69,6 +80,23 @@ export default function SettingScreen() {
       return "#F1F1F1";
     }
   }
+
+  function getRadioButtonColor1(selectedFlowFlag) {
+    if (flowFlag === selectedFlowFlag) {
+      return "#AED6F1";
+    } else {
+      return "#F1F1F1";
+    }
+  }
+
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem("user_id");
+      dispatch(setId([]));
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -91,7 +119,7 @@ export default function SettingScreen() {
                   language === "en-US" && styles.selectedLabel,
                 ]}
               >
-                English
+                EN
               </Text>
               {language === "en-US" && <View style={styles.radioButtonDot} />}
             </TouchableOpacity>
@@ -108,29 +136,56 @@ export default function SettingScreen() {
                   language === "ja-JP" && styles.selectedLabel,
                 ]}
               >
-                日本語
+                JP
               </Text>
-              {language === "ja-JP" && (
-                <View style={styles.radioButtonDot} />
-              )}
+              {language === "ja-JP" && <View style={styles.radioButtonDot} />}
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.contextModeContainer}>
           <Text style={styles.label}>Context Mode:</Text>
-          <TouchableOpacity
-            style={[
-              styles.contextModeButton,
-              contextMode && styles.contextModeButtonOn,
-            ]}
-            onPress={toggleContextMode}
-          >
-            <Text style={styles.contextModeButtonText}>
-              {contextMode ? "Turn Off" : "Turn On"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.radioButtonGroup}>
+            <TouchableOpacity
+              style={[
+                styles.radioButton,
+                { backgroundColor: getRadioButtonColor1(1) },
+              ]}
+              onPress={() => toggleFlowFlag(1)}
+            >
+              <Text
+                style={[
+                  styles.radioButtonLabel,
+                  flowFlag === 1 && styles.selectedLabel,
+                ]}
+              >
+                On
+              </Text>
+              {flowFlag === 1 && <View style={styles.radioButtonDot} />}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.radioButton,
+                { backgroundColor: getRadioButtonColor1(0) },
+              ]}
+              onPress={() => toggleFlowFlag(0)}
+            >
+              <Text
+                style={[
+                  styles.radioButtonLabel,
+                  flowFlag === 0 && styles.selectedLabel,
+                ]}
+              >
+                Off
+              </Text>
+              {flowFlag === 0 && <View style={styles.radioButtonDot} />}
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -199,13 +254,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   contextModeButton: {
-    backgroundColor: "#AED6F1", // 파스텔톤 파란색
+    backgroundColor: "#AED6F1", // Light Blue
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
   contextModeButtonOn: {
-    backgroundColor: "#F1F1F1", // 기본 배경색
+    backgroundColor: "#F1F1F1", // Default Background Color
   },
   contextModeButtonText: {
     fontSize: 16,

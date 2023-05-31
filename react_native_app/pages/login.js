@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SERVER_IP } from "../config";
 import {
   View,
   Text,
@@ -10,6 +11,8 @@ import {
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setId } from "../storage/actions";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function LoginScreen({ navigation }) {
   const [id, setID] = useState("");
@@ -17,12 +20,13 @@ export default function LoginScreen({ navigation }) {
   const dispatch = useDispatch();
 
   const handleSubmit = async () => {
-    const response = await axios.post("http://192.168.0.32:5000/login", {
+    const response = await axios.post(`${SERVER_IP}/login`, {
       id: id,
       password: password,
     });
 
     if (response.data.message === "Success") {
+      await AsyncStorage.setItem('user_id', id);
       Alert.alert("Success!", "로그인 성공.");
       dispatch(setId(id));
       navigation.navigate("대화");
