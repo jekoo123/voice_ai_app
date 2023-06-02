@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FlatList,
   View,
@@ -8,25 +8,17 @@ import {
   Modal,
   Button,
   TouchableOpacity,
+  Image,
+  ImageBackground,
 } from "react-native";
 import { ListItem } from "react-native-elements";
 import Toolbar from "../components/toolbar";
 import initialData from "../assets/items";
+import axios from "axios";
+import { SERVER_IP } from "../config";
+import { useSelector, useDispatch } from "react-redux";
 
 const NUM_COLUMNS = 2;
-const itemWidth = Dimensions.get("window").width / NUM_COLUMNS;
-
-const renderItem = ({ item, onPress }) => (
-  <TouchableOpacity onPress={onPress}>
-    <ListItem
-      containerStyle={styles.itemContainer}
-      title={item.title}
-      titleStyle={styles.itemTitle}
-    >
-      {item.purchased && <Text style={styles.purchasedText}>구매함</Text>}
-    </ListItem>
-  </TouchableOpacity>
-);
 
 export default function ShopScreen() {
   const windowWidth = Dimensions.get("window").width;
@@ -34,28 +26,128 @@ export default function ShopScreen() {
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [data, setData] = useState(initialData);
+  const [userCredits, setUserCredits] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const user_id = useSelector((state) => {
+    return state.id;
+  });
+  const dispatch = useDispatch();
 
+  useEffect(() => {
+    const fetchUserCredits = async () => {
+      try {
+        const response = await axios.post(`${SERVER_IP}/credits`, {
+          id: user_id,
+        });
+        setUserCredits(response.data.credits);
+      } catch (error) {
+        console.log("Error fetching user credits:", error);
+      }
+    };
+      const fetchUserPurchases = async () => {
+        try {
+          const response = await axios.post(`${SERVER_IP}/user-purchases`, {
+            id: user_id,
+          });
+    
+          const purchasedItems = response.data.purchases;
+    
+          const updatedData = data.map((item) => {
+            if (purchasedItems.includes(item.title)) {
+              return { ...item, purchased: true };
+            }
+            return item;
+          });
+    
+          setData(updatedData);
+        } catch (error) {
+          console.log("Error fetching user purchases:", error);
+        }
+      };
+    
+      fetchUserPurchases();
+      fetchUserCredits();
+    }, []);
+    
+
+  const renderItem = ({ item, onPress }) => (
+    <TouchableOpacity onPress={onPress}>
+      <ImageBackground
+        source={item.backgroundImage}
+        style={styles.itemBackground}
+        imageStyle={styles.itemImage}
+      >
+        <ListItem
+          containerStyle={[
+            styles.itemContainer,
+            item.purchased ? styles.purchasedItemContainer : null,
+          ]}
+          title={item.title}
+          titleStyle={styles.itemTitle}
+        >
+          {item.purchased && <Text style={styles.purchasedText}>보유중</Text>}
+        </ListItem>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
   const handleItemPress = (item) => {
     setSelectedItem(item);
     setModalVisible(true);
   };
-
-  const handlePurchase = () => {
-    // 선택한 아이템을 구매 상태로 변경합니다.
-    const updatedData = data.map((item) => {
-      if (item.title === selectedItem.title) {
-        return { ...item, purchased: true };
+  const handlePurchase = async () => {
+    if (userCredits >= selectedItem.cost) {
+      // Deduct the item's cost from the user's credits
+      const updatedCredits = userCredits - selectedItem.cost;
+      setUserCredits(updatedCredits);
+  
+      // Set the item as purchased
+      const updatedData = data.map((item) => {
+        if (item.title === selectedItem.title) {
+          return { ...item, purchased: true };
+        }
+        return item;
+      });
+  
+      // Update the data and close the modal
+      setData(updatedData);
+      setModalVisible(false);
+  
+      try {
+        // Send the updated credits to the server
+        await axios.post(`${SERVER_IP}/update-credits`, {
+          id: user_id,
+          credits: updatedCredits,
+        });
+        console.log("User credits updated in the server's database");
+      } catch (error) {
+        console.log("Error updating user credits in the server:", error);
       }
-      return item;
-    });
-    // 데이터를 업데이트하고 모달을 닫습니다.
-    setData(updatedData);
-    setModalVisible(false);
+  
+      try {
+        // Send the purchase information to the server
+        await axios.post(`${SERVER_IP}/update-purchase`, {
+          id: user_id,
+          items: selectedItem.title,
+        });
+        console.log("User purchase updated in the server's database");
+      } catch (error) {
+        console.log("Error updating user purchase in the server:", error);
+      }
+    } else {
+      // Display an error or notification if the user doesn't have enough credits
+      console.log("Insufficient credits");
+    }
   };
+  
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.creditsText}>
+          <Image source={require("../assets/credit.png")} style={styles.creditImage} />
+          <Text style={styles.creditsValue}>{userCredits}</Text>
+        </Text>
+      </View>
       <View style={styles.contentsContainer}>
         <FlatList
           data={data}
@@ -80,17 +172,18 @@ export default function ShopScreen() {
 
                 {!selectedItem.purchased && (
                   <View style={styles.questionBox}>
-                    <Text style={styles.questionText}>구매하시겠습니까?</Text>
+                    <Text style={styles.questionText}>구매하시겠습니까? (가격: {selectedItem.cost} credits)</Text>
                     <View style={styles.buttonContainer}>
-                      <Button title="구매" onPress={handlePurchase} />
+                      <Button title="구매" onPress={handlePurchase} color={styles.purchaseButton.backgroundColor} />
                       <Button
                         title="취소"
                         onPress={() => setModalVisible(false)}
+                        color={styles.cancelButton.backgroundColor}
                       />
                     </View>
                   </View>
                 )}
-
+                <Text style={styles.creditsValue}>{userCredits} credits</Text>
                 {selectedItem.purchased && (
                   <Text style={styles.purchasedLabel}>구매 완료</Text>
                 )}
@@ -110,26 +203,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentsContainer:{
-    flex:0.9,
+  header: {
+    padding: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  toolbarContainer:{
-    flex:0.1,
+  creditsText: {
+    flexDirection: "row",
+    alignItems: "center",
+    fontSize: 22,
+  },
+  creditImage: {
+    width: 25,
+    height: 25,
+    marginRight: 5,
+  },
+  creditsValue: {
+    fontWeight: "bold",
+  },
+  contentsContainer: {
+    flex: 0.9,
+  },
+  toolbarContainer: {
+    flex: 0.1,
   },
   itemContainer: {
     width: Dimensions.get("window").width / (NUM_COLUMNS + 1),
     height: 150,
-    margin: 10,
+    margin: 25,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "black",
+    backgroundColor: "transparent",
   },
   itemTitle: {
     fontSize: 16,
     fontWeight: "bold",
   },
   purchasedText: {
+    fontSize: 20,
     color: "green",
   },
   columnWrapper: {
@@ -144,12 +258,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
+    width: Dimensions.get("window").width * 0.8,
   },
   modalTitle: {
     fontSize: 18,
@@ -159,7 +275,6 @@ const styles = StyleSheet.create({
   questionBox: {
     alignItems: "center",
   },
-
   questionText: {
     fontSize: 16,
     marginBottom: 10,
@@ -174,5 +289,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginTop: 10,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: 170,
+    marginTop: 10,
+  },
+  purchaseButton: {
+    backgroundColor: "#6666FF",
+  },
+  cancelButton: {
+    backgroundColor: "darkgray",
+  },
+  itemBackground: {
+    width: Dimensions.get("window").width / (NUM_COLUMNS + 1),
+    height: 150,
+    margin: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "black",
+  },
+  itemImage: {
+  },
+  purchasedItemContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
 });
