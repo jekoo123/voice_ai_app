@@ -6,15 +6,19 @@ import {
   CHANGE_LANGUAGE,
   CHANGE_CONTEXT,
   SET_SAVE,
+  SETTING_SAVE,
   DELETE_SAVE,
-  SET_SCORE
+  SET_GRA_SCORE,
+  SET_PRO_SCORE,
+  RESET_STATE
 } from "./actions";
 
 const initialState = {
   DIALOG: [],
   USER: [],
   SAVE: [],
-  SCORE: [],
+  PRO_SCORE: [],
+  GRA_SCORE: [],
 };
 
 function rootReducer(state = initialState, action) {
@@ -30,18 +34,20 @@ function rootReducer(state = initialState, action) {
     case CHANGE_LANGUAGE:
       const temp1 = [...state.USER];
       temp1[1] = action.payload;
-      return { ...state, USER: newUser };
+      return { ...state, USER: temp1 };
     case CHANGE_CONTEXT:
       const temp2 = [...state.USER];
       temp2[2] = action.payload;
-      return { ...state, USER: newUser };
+      return { ...state, USER: temp2 };
+    case SETTING_SAVE:
+      return { ...state, SAVE: action.payload };
     case SET_SAVE:
       if (state.SAVE.includes(action.payload)) {
         return state;
       } else {
         return {
           ...state,
-          save: [...state.SAVE, action.payload],
+          SAVE: [...state.SAVE, action.payload],
         };
       }
     case DELETE_SAVE:
@@ -49,8 +55,13 @@ function rootReducer(state = initialState, action) {
         ...state,
         SAVE: state.SAVE.filter((item) => item !== action.payload),
       };
-    case SET_SCORE:
-      return { ...state, SCORE: [...state.SCORE, action.payload] };
+    case SET_PRO_SCORE:
+      return { ...state, PRO_SCORE: [...state.PRO_SCORE, action.payload] };
+    case SET_GRA_SCORE:
+      return { ...state, GRA_SCORE: action.payload };
+
+    case RESET_STATE:
+      return initialState;
     default:
       return state;
   }
