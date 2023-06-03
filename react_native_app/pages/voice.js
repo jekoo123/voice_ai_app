@@ -11,43 +11,41 @@ import { Audio } from "expo-av";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch, useSelector } from "react-redux";
-import { setContext1 } from "../storage/actions";
-import { addArray1 } from "../storage/actions";
+import { addDialog, changeContext, addDialog } from "../storage/actions";
 import * as FileSystem from "expo-file-system";
-import { useIsFocused } from '@react-navigation/native';
 
 export default function VoiceScreen() {
   const [recording, setRecording] = useState();
   const [isRecording, setIsRecording] = useState(false);
   const [img, setImg] = useState(0);
+  // const [context, setContext] = useState(0);
   const dispatch = useDispatch();
-  const [language , setLanguage] = useState("");
-  const [context,setContext] = useState(0);
-  const isFocused = useIsFocused();
+  // const [language , setLanguage] = useState("");
+  // const isFocused = useIsFocused();
 
   const data = useSelector((state) => {
-    return state;
+    return state.USER;
   });
-  useEffect(()=>{
-    getInfo();
-  },[isFocused])
+  // useEffect(()=>{
+  //   getInfo();
+  // },[isFocused])
 
-  const getInfo = async () => {
-    try {
-      const response = await axios.post(`${SERVER_IP}/init`, {
-        id: data.id,
-      });
-      setLanguage(response.data.language);
-      if(data.context ===2){
-        setContext(2);
-      }
-      else{
-        setContext(response.data.context);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  // const getInfo = async () => {
+  //   try {
+  //     const response = await axios.post(`${SERVER_IP}/init`, {
+  //       id: data.id,
+  //     });
+  //     setLanguage(response.data.language);
+  //     if(data.context ===2){
+  //       setContext(2);
+  //     }
+  //     else{
+  //       setContext(response.data.context);
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // }
 
   async function startRecording() {
     try {
@@ -103,24 +101,23 @@ export default function VoiceScreen() {
         name: "audio.m4a",
         type: "audio/m4a",
       });
-      formData.append('languageCode', language);
-      formData.append('contextMode', context);
-      if(context === 2){
-        formData.append('early',data.array1.map(subArray => `User: ${subArray[0]}\n AI: ${subArray[1]}\n`).join(''));
-      }
-      const response = await axios.post(
-        `${SERVER_IP}/transcribe`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+      formData.append("languageCode", data[1]);
+      formData.append("contextMode", data[2]);
+      // if(context === 2){
+      //   formData.append('early',data.array1.map(subArray => `User: ${subArray[0]}\n AI: ${subArray[1]}\n`).join(''));
+      // }
+      const response = await axios.post(`${SERVER_IP}/transcribe`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-        
-      );
+      });
       dispatch(
-        addArray1([response.data.sttResponse, response.data.chatResponse, response.data.pronunciation])
+        addDialog([
+          response.data.sttResponse,
+          response.data.chatResponse,
+        ])
       );
+      dispatch(setScore(response.data.pronunciation))
 
       const audio = response.data.audio;
       const audioFileUri = FileSystem.documentDirectory + "temp.mp3";
@@ -132,13 +129,13 @@ export default function VoiceScreen() {
       });
       audioSound.playAsync();
 
-      setImg(0);
-            
-      if(context === 1){
-        dispatch(setContext1(2));
-        setContext(2);
+      setTimeout(() => {
+        setImg(0);
+      }, 3000);
+
+      if (context === 1) {
+        dispatch(changeContext(2));
       }
-      
     } catch (err) {
       console.error("Failed to stop recording", err);
     }

@@ -11,7 +11,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch, useSelector } from "react-redux";
-import { setArray1, saveSentence } from "../storage/actions";
+import { setDialog, setSave, setDialog } from "../storage/actions";
 export default function ChatScreen() {
   const dispatch = useDispatch();
   const [evaluation, setEvaluation] = useState([]);
@@ -21,18 +21,18 @@ export default function ChatScreen() {
   });
 
   useEffect(() => {
-    if (data.array1.length > 0) {
+    if (data.Dialog.length > 0) {
       submitAllMessages();
     }
   }, []);
 
   const submitAllMessages = async () => {
-    const newArray1Promises = data.array1.map(async (e) => {
-      if (e.length < 4) {
+    const newArray1Promises = data.Dialog.map(async (e) => {
+      if (e.length < 3) {
         try {
           const response = await axios.post(`${SERVER_IP}/evaluation`, {
             input: e[0],
-            id: data.id,
+            id: data[0],
           });
           return [...e, response.data.grammer];
         } catch (error) {
@@ -46,12 +46,12 @@ export default function ChatScreen() {
 
     const newArray1 = await Promise.all(newArray1Promises);
     setEvaluation(newArray1);
-    dispatch(setArray1(newArray1));
+    dispatch(setDialog(newArray1));
   };
 
   const renderItem = ({ item }) => {
     const handleSave = () => {
-      dispatch(saveSentence(item[3]));
+      dispatch(setSave(item[2]));
     };
 
     return (
@@ -70,12 +70,12 @@ export default function ChatScreen() {
               <TouchableOpacity onPress={handleSave}>
                 <Icon
                   style={styles.icon}
-                  name="save-outline"
+                  name="save"
                   size={27}
                   color={
                     data.save.find(
                       (sentence) =>
-                        sentence === item[3]
+                        sentence === item[2]
                     )
                       ? "blue"
                       : "black"
@@ -83,7 +83,7 @@ export default function ChatScreen() {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.text}>{item[3]}</Text>
+            <Text style={styles.text}>{item[2]}</Text>
           </View>
         </View>
         <View>

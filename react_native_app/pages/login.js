@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setId } from "../storage/actions";
+import { setUser } from "../storage/actions";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -24,11 +24,13 @@ export default function LoginScreen({ navigation }) {
       id: id,
       password: password,
     });
-
     if (response.data.message === "Success") {
       await AsyncStorage.setItem('user_id', id);
       Alert.alert("Success!", "로그인 성공.");
-      dispatch(setId(id));
+      const temp = [response.data.id, response.data.language, response.data.contextMode]
+      dispatch(setUser(temp));
+      
+
       navigation.navigate("대화");
     } else {
       Alert.alert("Fail", "정보가 일치하지 않습니다.");

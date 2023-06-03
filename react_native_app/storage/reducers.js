@@ -1,55 +1,56 @@
-// reducers.js
 import {
-  ADD_ARRAY1,
-  SET_ARRAY1,
-  SET_NUMBER,
-  SET_ID,
-  SAVE_SENTENCE,
-  SET_CONTEXT,
+  ADD_DIALOG,
+  SET_DIALOG,
+  ADD_USER,
+  SET_USER,
+  CHANGE_LANGUAGE,
+  CHANGE_CONTEXT,
+  SET_SAVE,
+  DELETE_SAVE,
+  SET_SCORE
 } from "./actions";
 
-// const myReducer = (state = [], action) => {
-//   switch (action.type) {
-//     case "ADD_TO_DATA":
-//       return [...state, action.payload];
-//     case "DELETE_ALL":
-//       return [];
-//     default:
-//       return state;
-//   }
-// };
-// export default myReducer;
-
 const initialState = {
-  array1: [],
-  number: 0,
-  id: "",
-  save: [],
-  context: 0,
+  DIALOG: [],
+  USER: [],
+  SAVE: [],
+  SCORE: [],
 };
 
 function rootReducer(state = initialState, action) {
   switch (action.type) {
-    case ADD_ARRAY1:
-      return { ...state, array1: [...state.array1, action.payload] };
-    case SET_ARRAY1:
-      return { ...state, array1: action.payload };
-    case SET_NUMBER:
-      return { ...state, number: action.payload };
-    case SET_ID:
-      return { ...state, id: action.payload };
-    case SAVE_SENTENCE:
-      if (state.save.includes(action.payload)) {
+    case ADD_DIALOG:
+      return { ...state, DIALOG: [...state.DIALOG, action.payload] };
+    case SET_DIALOG:
+      return { ...state, DIALOG: action.payload };
+    case ADD_USER:
+      return { ...state, USER: [...state.USER, action.payload] };
+    case SET_USER:
+      return { ...state, USER: action.payload };
+    case CHANGE_LANGUAGE:
+      const temp1 = [...state.USER];
+      temp1[1] = action.payload;
+      return { ...state, USER: newUser };
+    case CHANGE_CONTEXT:
+      const temp2 = [...state.USER];
+      temp2[2] = action.payload;
+      return { ...state, USER: newUser };
+    case SET_SAVE:
+      if (state.SAVE.includes(action.payload)) {
         return state;
       } else {
         return {
           ...state,
-          save: [...state.save, action.payload],
+          save: [...state.SAVE, action.payload],
         };
       }
-
-    case SET_CONTEXT:
-      return { ...state, context: action.payload };
+    case DELETE_SAVE:
+      return {
+        ...state,
+        SAVE: state.SAVE.filter((item) => item !== action.payload),
+      };
+    case SET_SCORE:
+      return { ...state, SCORE: [...state.SCORE, action.payload] };
     default:
       return state;
   }

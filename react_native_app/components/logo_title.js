@@ -1,37 +1,43 @@
-import { View, Text, StyleSheet,Image } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { useNavigation } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/Ionicons";
 
 export default function LogoTitle(props) {
   const navigation = useNavigation();
 
   return (
-    <View style={stlyes.container}>
-      <Text style={stlyes.pagename}>{props.title}</Text>
+    <View style={styles.container}>
+      <Text style={styles.pagename}>{props.title}</Text>
       <TouchableOpacity
-        style={stlyes.button}
+        style={styles.button}
         onPress={() => navigation.navigate("설정")}
       >
-        <Image
-          source={require("../assets/Settings_img.png")}
+        <Icon
+          style={styles.icon}
+          name="settings-outline"
+          size={35}
+          color={"black"}
         />
       </TouchableOpacity>
     </View>
   );
 }
 
-
-const stlyes= StyleSheet.create({
-  container :{
-    flexDirection:"row",
-    alignItems:"center",
-    justifyContent:"space-between",
-    width:"105%",
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "105%",
   },
-  button:{
+  button: {
     width:50,
   },
-  pagename:{
-    fontSize:22,
-  }
-})
+  pagename: {
+    fontSize: 22,
+  },
+  icon: {
+    marginLeft:6,
+  },
+});
