@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = ""
+openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
@@ -58,7 +58,6 @@ def synthesize_speech(text, language_code):
     return (audio_base64_string)
 
 def chat(user_input, language_code , contextMode , early):
-    
     try:
         if int(contextMode) == 1:  
             response = openai.Completion.create(
@@ -106,10 +105,8 @@ def chat(user_input, language_code , contextMode , early):
             print("love")
             ai_response = response.choices[0].text.strip()
             return ai_response
-
     except Exception as e:
         return str(e)
-
 
 
 @app.route('/signup', methods=['POST'])
@@ -122,14 +119,14 @@ def signup():
     else : 
         db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 })
         return jsonify({"message":"Success"})
-    
+
 @app.route('/login', methods=['POST'])
 def login():
     id = request.json.get('id')
     password = request.json.get('password')
     user = db.users.find_one({"id": id, "password": password})
     if user:
-        return jsonify({"message" : "Success", "id" : id, "name" : user["name"]})
+        return jsonify({"message" : "Success", "id" : id, "language" : user["language"], "contextMode" : user["contextMode"]})
     else :
         return jsonify({"message" : "Fail"})
 
@@ -239,7 +236,7 @@ def score():
     ratio = SequenceMatcher(None, input,input2 ).ratio()
     return jsonify({"grammer_score" : ratio})
 
-@app.route('/init', methods=['POST'])
+@app.route('/fetch', methods=['POST'])
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
