@@ -10,9 +10,11 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
+import { useIsFocused } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { setDialog, setSave, setDialog } from "../storage/actions";
+import { setDialog, setSave } from "../storage/actions";
 export default function ChatScreen() {
+  const isFocused = useIsFocused();
   const dispatch = useDispatch();
   const [evaluation, setEvaluation] = useState([]);
 
@@ -20,19 +22,33 @@ export default function ChatScreen() {
     return state;
   });
 
+
   useEffect(() => {
-    if (data.Dialog.length > 0) {
+    if (data.DIALOG.length > 0) {
       submitAllMessages();
     }
   }, []);
+  
+  useEffect(() => {
+    if (!isFocused) {
+      const updateList = async () => {
+        await axios.post(`${SERVER_IP}/update_list`, {
+          id: data.USER[0],
+          list: data.SAVE,
+        });
+      };
+      updateList();
+    }
+
+  }, [isFocused]);
 
   const submitAllMessages = async () => {
-    const newArray1Promises = data.Dialog.map(async (e) => {
+    const newArray1Promises = data.DIALOG.map(async (e) => {
       if (e.length < 3) {
         try {
           const response = await axios.post(`${SERVER_IP}/evaluation`, {
             input: e[0],
-            id: data[0],
+            id: data.USER[0],
           });
           return [...e, response.data.grammer];
         } catch (error) {
@@ -73,10 +89,7 @@ export default function ChatScreen() {
                   name="save"
                   size={27}
                   color={
-                    data.save.find(
-                      (sentence) =>
-                        sentence === item[2]
-                    )
+                    data.SAVE.find((sentence) => sentence === item[2])
                       ? "blue"
                       : "black"
                   }

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setUser } from "../storage/actions";
+import { setUser,settingSave } from "../storage/actions";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -29,7 +29,7 @@ export default function LoginScreen({ navigation }) {
       Alert.alert("Success!", "로그인 성공.");
       const temp = [response.data.id, response.data.language, response.data.contextMode]
       dispatch(setUser(temp));
-      
+      dispatch(settingSave(response.data.list))
 
       navigation.navigate("대화");
     } else {

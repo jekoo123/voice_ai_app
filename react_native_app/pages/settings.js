@@ -3,40 +3,27 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import { SERVER_IP } from "../config";
-import { changeLanguage, changeContext } from "../storage/actions";
+import { changeLanguage, changeContext,resetState } from "../storage/actions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SettingScreen({ navigation }) {
   const [language, setLanguage] = useState("");
   const [flowFlag, setFlowFlag] = useState(0);
   const dispatch = useDispatch();
-
+  
   const data = useSelector((state) => {
     return state.USER;
   });
-
+  
   useEffect(() => {
     setLanguage(data[1]);
     setFlowFlag(data[2]);
-    // fetchLanguageFromServer();
   }, []);
-
-  // const fetchLanguageFromServer = async () => {
-  //   try {
-  //     const response = await axios.post(`${SERVER_IP}/fetch`, {
-  //       id: data[0],
-  //     });
-  //     setLanguage(response.data.language);
-  //     setFlowFlag(response.data.context);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
+  
   const toggleLanguage = async (language) => {
     try {
       const response = await axios.post(`${SERVER_IP}/change_language`, {
-        id: user_id,
+        id: data[0],
         language: language,
       });
       setLanguage(response.data.language);
@@ -45,11 +32,11 @@ export default function SettingScreen({ navigation }) {
       console.log(error);
     }
   };
-
+  
   const toggleFlowFlag = async (flag) => {
     try {
       const response = await axios.post(`${SERVER_IP}/flow_flag`, {
-        id: user_id,
+        id: data[0],
         flow_flag: flag,
       });
       setFlowFlag(response.data.contextMode);
@@ -58,23 +45,7 @@ export default function SettingScreen({ navigation }) {
       console.log(error);
     }
   };
-
-  // function getRadioButtonColor(selectedLanguage, selectedFlowFlag) {
-  //   if (selectedLanguage) {
-  //     if (language === selectedLanguage) {
-  //       return "#AED6F1";
-  //     } else {
-  //       return "#F1F1F1";
-  //     }
-  //   } else {
-  //     if (flowFlag === selectedFlowFlag) {
-  //       return "#AED6F1";
-  //     } else {
-  //       return "#F1F1F1";
-  //     }
-  //   }
-  // }
-
+  
   function getRadioButtonColor(selectedLanguage) {
     if (language === selectedLanguage) {
       return "#AED6F1";
@@ -94,7 +65,7 @@ export default function SettingScreen({ navigation }) {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("user_id");
-      dispatch(setId([]));
+      dispatch(resetState);
     } catch (e) {
       console.error(e);
     }
@@ -104,7 +75,6 @@ export default function SettingScreen({ navigation }) {
     <View style={styles.screen}>
       <View style={styles.container}>
         <Text style={styles.title}>Settings</Text>
-
         <View style={styles.languageContainer}>
           <Text style={styles.label}>Language :</Text>
           <View style={styles.radioButtonGroup}>
@@ -218,7 +188,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 5,
-    
   },
   title: {
     fontSize: 30,
@@ -250,7 +219,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-
   radioButton1: {
     flexDirection: "row",
     alignItems: "center",
@@ -274,7 +242,6 @@ const styles = StyleSheet.create({
   selectedLabel: {
     fontWeight: "bold",
   },
-
   contextModeContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -318,102 +285,5 @@ const styles = StyleSheet.create({
   },
   logoutText:{
     fontSize:20,
-
   },
 });
-
-// import React from "react";
-// import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-// import Toolbar from "../components/toolbar";
-// import { useSelector } from "react-redux";
-// export default function SettingScreen() {
-//   const data = useSelector((state) => {
-//     return state.number;
-//   });
-
-//   return (
-//     <View style={styles.container}>
-//       <View style={styles.contentsContainer}>
-//         <View style={styles.contentBox}>
-//           <Text style={styles.title}>설정</Text>
-//           <View style={styles.languageSettingContainer}>
-//             <Text style={styles.languageSettingText}>언어</Text>
-//             <View style={styles.optionContainer}>
-//               <TouchableOpacity style={styles.languageButton}>
-//                 <Text style={styles.languageText}>EN</Text>
-//               </TouchableOpacity>
-//               <TouchableOpacity style={[styles.languageButton, styles.jpButton]}>
-//                 <Text style={styles.languageText}>JP</Text>
-//               </TouchableOpacity>
-//             </View>
-//           </View>
-//         </View>
-//       </View>
-
-//       <View style={styles.toolbarContainer}>
-//         <Toolbar />
-//       </View>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//   },
-//   toolbarContainer: {
-//     flex: 0.1,
-//   },
-//   contentsContainer: {
-//     flex: 0.9,
-//     alignItems: "center",
-//   },
-//   contentBox: {
-//     marginTop: 35,
-//     alignItems: "center",
-//     backgroundColor: "#ACB1FF",
-//     width: 304,
-//     height: 446,
-//     borderRadius: 20,
-//   },
-//   title: {
-//     fontSize: 24,
-//     fontWeight: 800,
-//     letterSpacing: 4,
-//     marginTop: 20,
-//     color: "white",
-//   },
-//   languageSettingContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     marginTop: 30,
-//     backgroundColor: "white",
-//     borderRadius: 20,
-//     width: 250,
-//     paddingHorizontal: 20,
-//     paddingVertical: 20,
-//     justifyContent:"space-between"
-//   },
-//   languageSettingText: {
-//     fontSize: 20,
-//   },
-//   optionContainer: {
-//     flexDirection:"row",
-//     padding:10,
-//     borderRadius: 20,
-//     backgroundColor: "#E6E6E6",
-//     width:100,
-//     justifyContent:"center"
-//   },
-//   languageButton:{
-//     alignItems:"center",
-//     paddingHorizontal:10,
-//   },
-//   languageText:{
-//     fontSize:15,
-//   },
-//   jpButton:{
-//     borderLeftWidth:1,
-//   }
-
-// });
