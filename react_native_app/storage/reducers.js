@@ -14,6 +14,7 @@ import {
   SET_CREDIT,
   SET_ITEM,
   ADD_ITEM,
+  SET_POINT,
   RESET_STATE
 } from "./actions";
 
@@ -26,6 +27,7 @@ const initialState = {
   DIA_SCORE: 0,
   CREDIT : 0,
   ITEM:[],
+  POINT : 0,
 };
 
 function rootReducer(state = initialState, action) {
@@ -74,6 +76,8 @@ function rootReducer(state = initialState, action) {
       return { ...state, ITEM: action.payload };
     case ADD_ITEM :
       return { ...state, ITEM: [...state.ITEM, action.payload] };
+    case SET_POINT : 
+      return { ...state, POINT: action.payload };
     case RESET_STATE:
       return initialState;
     default:

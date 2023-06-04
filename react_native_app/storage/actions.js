@@ -13,6 +13,7 @@ export const SET_DIA_SCORE = "SET_DIA_SCORE";
 export const SET_CREDIT = "SET_CREDIT";
 export const SET_ITEM = "SET_ITEM";
 export const ADD_ITEM = "ADD_ITEM";
+export const SET_POINT = "SET_POINT";
 export const RESET_STATE = "RESET_STATE";
 
 export function addDialog(payload) {
@@ -61,6 +62,9 @@ export function setItem(payload) {
 }
 export function addItem(payload) {
   return { type: ADD_ITEM, payload: payload };
+}
+export function setPoint(payload) {
+  return { type: SET_POINT, payload: payload };
 }
 
 export function resetState() {

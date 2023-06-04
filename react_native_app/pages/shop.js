@@ -34,16 +34,33 @@ export default function ShopScreen() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const updatedData = data.map((item) => {
-      if (reduxData.ITEM.includes(item.id)) {
-        return { ...item, purchased: true };
-      }
-      return item;
-    });
-
+    
     setUserCredits(reduxData.CREDIT);
-    setData(updatedData);
-  }, []);
+    const updateDataAndCredits = async () => {
+        const updatedData = data.map((item) => {
+            if (reduxData.ITEM.includes(item.id)) {
+                return { ...item, purchased: true };
+            }
+            return item;
+        });
+        setData(updatedData);
+        const updatedCredits = reduxData.CREDIT + reduxData.point;
+        try {
+            await axios.post(`${SERVER_IP}/update-credits`, {
+                id: reduxData.USER[0],
+                credits: updatedCredits,
+            });
+            console.log("User credits updated in the server's database");
+        } catch (error) {
+            console.log("Error updating user credits in the server:", error);
+        }
+
+        setUserCredits(updatedCredits);
+    };
+
+    updateDataAndCredits();
+}, []);
+
 
   // useEffect(() => {
   //   const fetchUserCredits = async () => {

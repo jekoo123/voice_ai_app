@@ -4,7 +4,7 @@ import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useSelector, useDispatch } from "react-redux";
-import { setDialog, setGraScore, setDiaScore } from "../storage/actions";
+import { setDialog, setGraScore, setDiaScore, setPoint } from "../storage/actions";
 import words from "../assets/words";
 import * as Progress from "react-native-progress";
 
@@ -14,6 +14,7 @@ export default function MyScreen({ navigation }) {
   const [dia_log, setDia_log] = useState([]);
   const [dia_score, setDia_score] = useState(11);
   const [proScore, setProScore] = useState(0);
+  const [point,set_Point] = useState(0);
   const dispatch = useDispatch();
 
   const data = useSelector((state) => {
@@ -52,9 +53,45 @@ export default function MyScreen({ navigation }) {
     };
 
     if (dia_log.length > 0) {
-      fetchData();
+      if (dia_log[dia_log.length - 1].length > 2) {
+        fetchData();
+      }
     }
   }, [dia_log]);
+  useEffect(() => {
+    const fetchContextScore = async () => {
+      const newContextResult = dia_log.slice(1).map(async (e, i) => {
+        try {
+          const response = await axios.post(`${SERVER_IP}/context`, {
+            aisentence: data.DIALOG[i][1],
+            usersentenceinput: e[0],
+          });
+          return response.data.output;
+        } catch (error) {
+          console.error(error);
+        }
+      });
+      const newArray2 = await Promise.all(newContextResult);
+      const total = newArray2.reduce((acc, curr) => {
+        return curr ? acc + curr : acc;
+      }, 0);
+      const average = total / newArray2.length;
+      console.log(newArray2);
+      setDia_score(average);
+      dispatch(setDiaScore(average));
+    };
+  
+    if (grammer_score > 0) {
+      fetchContextScore();
+    }
+  }, [grammer_score]);
+  
+  useEffect(()=>{
+    if(dia_score > 0){
+      set_Point(Math.floor((dia_score + grammer_score + proScore)/3*100))
+      dispatch(setPoint(Math.floor((dia_score + grammer_score + proScore)/3*100)))
+    }
+  },[dia_score])
 
   let previousIndex = -1;
   function printNextProverb() {
@@ -69,7 +106,6 @@ export default function MyScreen({ navigation }) {
   setInterval(printNextProverb, 1000 * 60 * 60);
 
   const receiveScore = async () => {
-    //문법이랑 문맥점수 받아오기
     try {
       const newArray1Promises = data.DIALOG.map(async (e) => {
         try {
@@ -87,24 +123,6 @@ export default function MyScreen({ navigation }) {
       const newArray1 = await Promise.all(newArray1Promises);
       setDia_log(newArray1);
       dispatch(setDialog(newArray1));
-
-      const newContextResult = data.DIALOG.slice(1).map(async (e, i) => {
-        if (data.DIALOG.length > 1 && e.length > 2) {
-          const response = await axios.post(`${SERVER_IP}/context`, {
-            aisentence: data.DIALOG[i][1],
-            usersentenceinput: e[0],
-          });
-          return response.data.output;
-        } else return e;
-      });
-      const newArray2 = await Promise.all(newContextResult);
-      const total = newArray2.reduce((acc, curr) => {
-        return acc + curr;
-      }, 0);
-      const average = total / newArray2.length;
-      console.log(newArray2);
-      setDia_score(average);
-      dispatch(setDiaScore(average));
     } catch (error) {
       console.error(error);
     }
@@ -126,14 +144,14 @@ export default function MyScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.scoreContainer}>
-          <Text style={styles.scoreTitle}>오늘의 점수</Text>
+          <Text style={styles.scoreTitle}>오늘의 점수 : {point}</Text>
           {grammer_score > 0 ? (
             <Text style={styles.scoreText}>
               문법 점수 : {Math.floor(grammer_score * 100) / 10}
             </Text>
           ) : (
             <Text style={styles.scoreText}>
-              문법 점수 : Not enough talking.
+              문법 점수 : Loading or Not enough talking.
             </Text>
           )}
           {grammer_score > 0 && (
@@ -149,7 +167,7 @@ export default function MyScreen({ navigation }) {
             </Text>
           ) : (
             <Text style={styles.scoreText}>
-              문맥 점수 : Not enough talking.
+              문맥 점수 : Loading or Not enough talking.
             </Text>
           )}
 
@@ -162,7 +180,7 @@ export default function MyScreen({ navigation }) {
             </Text>
           ) : (
             <Text style={styles.scoreText}>
-              발음 점수 : Not enough talking.
+              발음 점수 : Loading or Not enough talking.
             </Text>
           )}
 
@@ -238,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAEBD7",
     borderRadius: 10,
     marginTop: 35,
-    paddingTop:17,
+    paddingTop: 17,
     width: 327,
     height: 210,
     alignItems: "center",
@@ -257,7 +275,7 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontWeight: "bold",
-    marginVertical:10,
+    marginVertical: 10,
   },
   memoContainer: {
     backgroundColor: "#FDF6E7",
