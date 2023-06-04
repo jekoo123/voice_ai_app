@@ -17,7 +17,7 @@ import initialData from "../assets/items";
 import axios from "axios";
 import { SERVER_IP } from "../config";
 import { useSelector, useDispatch } from "react-redux";
-import { setItem,addItem, setCredits } from "../storage/actions";
+import { setItem, equip, addItem, setCredit } from "../storage/actions";
 const NUM_COLUMNS = 2;
 
 export default function ShopScreen() {
@@ -27,40 +27,39 @@ export default function ShopScreen() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [data, setData] = useState(initialData);
   const [userCredits, setUserCredits] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [equipModalVisible, setEquipModalVisible] = useState(false);
   const reduxData = useSelector((state) => {
     return state;
   });
   const dispatch = useDispatch();
 
   useEffect(() => {
-    
     setUserCredits(reduxData.CREDIT);
-    const updateDataAndCredits = async () => {
-        const updatedData = data.map((item) => {
-            if (reduxData.ITEM.includes(item.id)) {
-                return { ...item, purchased: true };
-            }
-            return item;
-        });
-        setData(updatedData);
-        const updatedCredits = reduxData.CREDIT + reduxData.point;
-        try {
-            await axios.post(`${SERVER_IP}/update-credits`, {
-                id: reduxData.USER[0],
-                credits: updatedCredits,
-            });
-            console.log("User credits updated in the server's database");
-        } catch (error) {
-            console.log("Error updating user credits in the server:", error);
-        }
 
-        setUserCredits(updatedCredits);
+    const updateDataAndCredits = async () => {
+      const updatedData = data.map((item) => {
+        if (reduxData.ITEM.includes(item.id)) {
+          return { ...item, purchased: true };
+        }
+        return item;
+      });
+      setData(updatedData);
+      const updatedCredits = reduxData.CREDIT + reduxData.POINT;
+      try {
+        await axios.post(`${SERVER_IP}/update-credits`, {
+          id: reduxData.USER[0],
+          credits: updatedCredits,
+        });
+        console.log("User credits updated in the server's database");
+      } catch (error) {
+        console.log("Error updating user credits in the server:", error);
+      }
+      setUserCredits(updatedCredits);
     };
 
     updateDataAndCredits();
-}, []);
-
+  }, []);
 
   // useEffect(() => {
   //   const fetchUserCredits = async () => {
@@ -97,9 +96,12 @@ export default function ShopScreen() {
   //   fetchUserPurchases();
   //   fetchUserCredits();
   // }, []);
-
-  const renderItem = ({ item, onPress }) => (
-    <TouchableOpacity onPress={onPress}>
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      onPress={() =>
+        item.purchased ? handleEquipPress(item) : handleItemPress(item)
+      }
+    >
       <ImageBackground
         source={item.backgroundImage}
         style={styles.itemBackground}
@@ -120,13 +122,31 @@ export default function ShopScreen() {
   );
   const handleItemPress = (item) => {
     setSelectedItem(item);
-    setModalVisible(true);
+    setPurchaseModalVisible(true);
   };
+
+  const handleEquipPress = (item) => {
+    setSelectedItem(item);
+    setEquipModalVisible(true);
+  };
+  const handleEquip = async () => {
+    dispatch(equip(selectedItem.id));
+    try {
+      await axios.post(`${SERVER_IP}/update-equip`, {
+        id: reduxData.USER[0],
+        equip: selectedItem.id,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    setEquipModalVisible(false);
+  };
+
   const handlePurchase = async () => {
     if (userCredits >= selectedItem.cost) {
       const updatedCredits = userCredits - selectedItem.cost;
       setUserCredits(updatedCredits);
-      dispatch(setCredits(updatedCredits));
+      dispatch(setCredit(updatedCredits));
       const updatedData = data.map((item) => {
         if (item.id === selectedItem.id) {
           return { ...item, purchased: true };
@@ -134,11 +154,11 @@ export default function ShopScreen() {
         return item;
       });
       setData(updatedData);
-      setModalVisible(false);
-      if(!reduxData.ITEM.includes(selectedItem.id)){
+      setPurchaseModalVisible(false);
+      if (!reduxData.ITEM.includes(selectedItem.id)) {
         dispatch(addItem(selectedItem.id));
       }
-    
+
       try {
         await axios.post(`${SERVER_IP}/update-credits`, {
           id: reduxData.USER[0],
@@ -166,29 +186,37 @@ export default function ShopScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.creditsText}>
-          <Image
-            source={require("../assets/credit.png")}
-            style={styles.creditImage}
-          />
+        <Image
+          source={require("../assets/credit.png")}
+          style={styles.creditImage}
+        />
           <Text style={styles.creditsValue}>{userCredits}</Text>
-        </Text>
+
       </View>
       <View style={styles.contentsContainer}>
         <FlatList
           data={data}
-          renderItem={({ item }) =>
-            renderItem({ item, onPress: () => handleItemPress(item) })
-          }
+          renderItem={({ item }) => renderItem({ item })}
           keyExtractor={(item, index) => index.toString()}
           numColumns={NUM_COLUMNS}
           columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.contentContainer}
         />
         <Modal
-          visible={modalVisible}
+          visible={equipModalVisible}
           animationType="slide"
-          onRequestClose={() => setModalVisible(false)}
+          onRequestClose={() => setEquipModalVisible(false)}
+        >
+          <View>
+            <Text>장착하시겠습니까?</Text>
+            <Button title="장착" onPress={handleEquip} />
+            <Button title="취소" onPress={() => setEquipModalVisible(false)} />
+          </View>
+        </Modal>
+        <Modal
+          visible={purchaseModalVisible}
+          animationType="slide"
+          onRequestClose={() => setPurchaseModalVisible(false)}
         >
           <View style={styles.modalContainer}>
             {selectedItem && (
@@ -209,7 +237,7 @@ export default function ShopScreen() {
                       />
                       <Button
                         title="취소"
-                        onPress={() => setModalVisible(false)}
+                        onPress={() => setPurchaseModalVisible(false)}
                         color={styles.cancelButton.backgroundColor}
                       />
                     </View>
@@ -240,18 +268,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-  },
-  creditsText: {
-    flexDirection: "row",
-    alignItems: "center",
-    fontSize: 22,
+    borderWidth: 1,
   },
   creditImage: {
     width: 25,
     height: 25,
-    marginRight: 5,
+    marginRight: 13,
   },
   creditsValue: {
+    fontSize: 23,
     fontWeight: "bold",
   },
   contentsContainer: {
@@ -263,7 +288,6 @@ const styles = StyleSheet.create({
   itemContainer: {
     width: Dimensions.get("window").width / (NUM_COLUMNS + 1),
     height: 150,
-    margin: 25,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,

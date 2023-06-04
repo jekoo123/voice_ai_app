@@ -6,6 +6,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/blazer_shop.png"),
+    backgroundImage_default : require("../assets/model/blazer.png"),
     cost: 100,
   },
   {
@@ -15,6 +16,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/blazer2_shop.png"),
+    backgroundImage_default : require("../assets/model/blazer2.png"),
     cost: 100,
   },
   {
@@ -24,6 +26,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/facepainting1_shop.png"),
+    backgroundImage_default : require("../assets/model/facepainting1.png"),
     cost: 100,
   },
   {
@@ -33,6 +36,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/facepainting2_shop.png"),
+    backgroundImage_default : require("../assets/model/facepainting2.png"),
     cost: 100,
   },
   {
@@ -42,6 +46,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/halfup_shop.png"),
+    backgroundImage_default : require("../assets/model/halfup.png"),
     cost: 100,
   },
   {
@@ -51,6 +56,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/hat1_shop.png"),
+    backgroundImage_default : require("../assets/model/hat1.png"),
     cost: 100,
   },
   {
@@ -60,6 +66,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/headphone_shop.png"),
+    backgroundImage_default : require("../assets/model/headphone.png"),
     cost: 100,
   },
   {
@@ -69,6 +76,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/ribbon_shop.png"),
+    backgroundImage_default : require("../assets/model/ribbon.png"),
     cost: 100,
   },
   {
@@ -78,6 +86,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/ribbon_twin_shop.png"),
+    backgroundImage_default : require("../assets/model/ribbon_twin.png"),
     cost: 100,
   },
   {
@@ -87,6 +96,7 @@ const initialData = [
     purchased: false,
     equipped: false,
     backgroundImage: require("../assets/model/shopimg/ribbon2_shop.png"),
+    backgroundImage_default : require("../assets/model/ribbon2.png"),
     cost: 100,
   },
 ];

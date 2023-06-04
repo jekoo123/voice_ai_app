@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = ""
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
@@ -129,7 +129,7 @@ def signup():
     if db.users.find_one({"id": id}):
         return jsonify({"message": "Fail"})
     else : 
-        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 ,"list":[], "credit":0, "item":[]})
+        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 ,"list":[], "credit":0, "item":[], "equip":0})
         return jsonify({"message":"Success"})
 
 @app.route('/login', methods=['POST'])
@@ -138,7 +138,7 @@ def login():
     password = request.json.get('password')
     user = db.users.find_one({"id": id, "password": password})
     if user:
-        return jsonify({"message" : "Success", "id" : id, "language" : user["language"], "contextMode" : user["contextMode"], "list":user["list"], "credit":user['credit'], "item":user['item']})
+        return jsonify({"message" : "Success", "id" : id, "language" : user["language"], "contextMode" : user["contextMode"], "list":user["list"], "credit":user['credit'], "item":user['item'], "equip":user['equip']})
     else :
         return jsonify({"message" : "Fail"})
 
@@ -233,7 +233,10 @@ def score():
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
-    return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list'], "credit":user['credit'], "item":user['item']}), 200
+    print(user['credit'])
+    print(user['language'])
+    print(user['contextMode'])
+    return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list'], "credit":user['credit'], "item":user['item'], "equip":user['equip']}), 200
 
 @app.route('/change_language',methods =['POST'] )
 def change_language():
@@ -291,8 +294,16 @@ def update_credits():
 def update_purchase():
     id = request.json.get('id')
     items = request.json.get('items')
-    db.users.update_one({"id": id}, {"$push": {"items": items}})
+    db.users.update_one({"id": id}, {"$push": {"item": items}})
     return jsonify({"message": "Success"})
+
+@app.route('/equip', methods=['POST'])
+def equip():
+    id = request.json.get('id')
+    equip = request.json.get('equip')
+    db.users.update_one({"id": id}, {"$set": {"equip": equip}})
+    return jsonify({"message": "Success"})
+
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):

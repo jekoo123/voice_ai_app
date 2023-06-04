@@ -14,6 +14,7 @@ export const SET_CREDIT = "SET_CREDIT";
 export const SET_ITEM = "SET_ITEM";
 export const ADD_ITEM = "ADD_ITEM";
 export const SET_POINT = "SET_POINT";
+export const EQUIP = "EQUIP";
 export const RESET_STATE = "RESET_STATE";
 
 export function addDialog(payload) {
@@ -65,6 +66,9 @@ export function addItem(payload) {
 }
 export function setPoint(payload) {
   return { type: SET_POINT, payload: payload };
+}
+export function equip(payload) {
+  return { type: EQUIP, payload: payload };
 }
 
 export function resetState() {

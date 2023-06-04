@@ -15,6 +15,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { addDialog, setProScore } from "../storage/actions";
 import * as FileSystem from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
+import initialData from "../assets/items";
+// import { useIsFocused } from "@react-navigation/native";
 
 export default function VoiceScreen() {
   const [recording, setRecording] = useState();
@@ -23,12 +25,15 @@ export default function VoiceScreen() {
   const dispatch = useDispatch();
   const [dialog, setDialog] = useState([]);
   const [isAiTaking, setIsAiTaking] = useState(false);
+  const [equipItem, setEquipItem] = useState(null);
   const data = useSelector((state) => {
     return state;
   });
   useEffect(() => {
+    const image = initialData.find((item) => item.id === data.EQUIP);
+    setEquipItem(image);
     if (data.DIALOG.length > 0) {
-      makingDialog(data.DIALOG)
+      makingDialog(data.DIALOG);
     }
   }, []);
 
@@ -36,12 +41,12 @@ export default function VoiceScreen() {
     const temp = array
       .map((subArray) => `User: ${subArray[0]}\n AI: ${subArray[1]}\n`)
       .join("");
-      setDialog(temp);
+    setDialog(temp);
   };
 
   async function startRecording() {
     try {
-      makingDialog(data.DIALOG)
+      makingDialog(data.DIALOG);
 
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
@@ -113,7 +118,7 @@ export default function VoiceScreen() {
         uri: audioFileUri,
       });
       audioSound.playAsync();
-    
+
       dispatch(
         addDialog([response.data.sttResponse, response.data.chatResponse])
       );
@@ -154,11 +159,47 @@ export default function VoiceScreen() {
   };
 
   return (
+    // <ImageBackground
+    //   style={styles.voice_screen}
+    //   source={
+    //     equipItem.backgroundImage === null
+    //       ? require("../assets/Ai_default.png")
+    //       : equipItem.backgroundImage
+
+    //     // img === 0
+    //     //   ? equipItem.backgroundImage
+    //     //   : img === 1
+    //     //   ? require("../assets/Ai_listening.png")
+    //     //   : require("../assets/Ai_talking.png")
+    //   }
+    // >
+
+    //     <ImageBackground
+    //   style={styles.voice_screen}
+    //   source={
+    //     img === 0
+    //       ? equipItem.backgroundImage
+    //       : img === 1
+    //       ? require("../assets/Ai_listening.png")
+    //       : require("../assets/Ai_talking.png")
+    //   }
+    // >
+    // <ImageBackground
+    //   style={styles.voice_screen}
+    //   source={
+    //     img === 0
+    //       ? require("../assets/Ai_default.png")
+    //       : img === 1
+    //       ? require("../assets/Ai_listening.png")
+    //       : require("../assets/Ai_talking.png")
+    //   }
+    // >
+
     <ImageBackground
       style={styles.voice_screen}
       source={
         img === 0
-          ? require("../assets/Ai_default.png")
+          ? equipItem?.backgroundImage_default
           : img === 1
           ? require("../assets/Ai_listening.png")
           : require("../assets/Ai_talking.png")
