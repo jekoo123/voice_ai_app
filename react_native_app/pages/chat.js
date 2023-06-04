@@ -12,7 +12,7 @@ import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useIsFocused } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { setDialog, setSave } from "../storage/actions";
+import { setDialog, setSave, setDiaScore } from "../storage/actions";
 export default function ChatScreen() {
   const isFocused = useIsFocused();
   const dispatch = useDispatch();
@@ -22,13 +22,12 @@ export default function ChatScreen() {
     return state;
   });
 
-
   useEffect(() => {
     if (data.DIALOG.length > 0) {
       submitAllMessages();
     }
   }, []);
-  
+
   useEffect(() => {
     if (!isFocused) {
       const updateList = async () => {
@@ -38,15 +37,16 @@ export default function ChatScreen() {
         });
       };
       updateList();
-    }
 
+
+    }
   }, [isFocused]);
 
   const submitAllMessages = async () => {
     const newArray1Promises = data.DIALOG.map(async (e) => {
       if (e.length < 3) {
         try {
-          const response = await axios.post(`${SERVER_IP}/evaluation`, {
+          const response = await axios.post(`${SERVER_IP}/grammer`, {
             input: e[0],
             id: data.USER[0],
           });

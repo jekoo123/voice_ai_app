@@ -9,6 +9,10 @@ export const SET_SAVE = "SET_SAVE";
 export const DELETE_SAVE = "DELETE_SAVE";
 export const SET_GRA_SCORE = "SET_GRA_SCORE";
 export const SET_PRO_SCORE = "SET_PRO_SCORE";
+export const SET_DIA_SCORE = "SET_DIA_SCORE";
+export const SET_CREDIT = "SET_CREDIT";
+export const SET_ITEM = "SET_ITEM";
+export const ADD_ITEM = "ADD_ITEM";
 export const RESET_STATE = "RESET_STATE";
 
 export function addDialog(payload) {
@@ -43,6 +47,20 @@ export function setGraScore(payload) {
 }
 export function setProScore(payload) {
   return { type: SET_PRO_SCORE, payload: payload };
+}
+
+export function setDiaScore(payload) {
+  return { type: SET_DIA_SCORE, payload: payload };
+}
+
+export function setCredit(payload) {
+  return { type: SET_CREDIT, payload: payload };
+}
+export function setItem(payload) {
+  return { type: SET_ITEM, payload: payload };
+}
+export function addItem(payload) {
+  return { type: ADD_ITEM, payload: payload };
 }
 
 export function resetState() {

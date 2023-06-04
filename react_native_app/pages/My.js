@@ -4,13 +4,15 @@ import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useSelector, useDispatch } from "react-redux";
-import { setGraScore } from "../storage/actions";
+import { setDialog, setGraScore, setDiaScore } from "../storage/actions";
 import words from "../assets/words";
 import * as Progress from "react-native-progress";
 
 export default function MyScreen({ navigation }) {
   const [daysentence, setDaysentence] = useState(words[0]);
   const [grammer_score, setGrammer_score] = useState(0);
+  const [dia_log, setDia_log] = useState([]);
+  const [dia_score, setDia_score] = useState(11);
   const [proScore, setProScore] = useState(0);
   const dispatch = useDispatch();
 
@@ -19,14 +21,40 @@ export default function MyScreen({ navigation }) {
   });
 
   useEffect(() => {
-    if (data.DIALOG.length > 0) {
-      if (data.DIALOG[0].length > 2) {
-        receiveScore();
-        setProScore(computePronuncitaionScore());
-      }
+    setDia_log(data.DIALOG);
+    if (data.DIALOG.length > 1) {
+      receiveScore();
+      setProScore(computePronuncitaionScore());
     }
-    console.log(data.SAVE);
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const promises = dia_log.map(async (e) => {
+        try {
+          const response = await axios.post(`${SERVER_IP}/score`, {
+            input: e[0],
+            input2: e[2],
+          });
+          return response.data.grammer_score;
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const totalScore = results.reduce((accumulator, currentValue) => {
+        return accumulator + currentValue;
+      }, 0);
+      const averageScore = totalScore / results.length;
+      setGrammer_score(averageScore);
+      dispatch(setGraScore(averageScore));
+    };
+
+    if (dia_log.length > 0) {
+      fetchData();
+    }
+  }, [dia_log]);
 
   let previousIndex = -1;
   function printNextProverb() {
@@ -41,20 +69,42 @@ export default function MyScreen({ navigation }) {
   setInterval(printNextProverb, 1000 * 60 * 60);
 
   const receiveScore = async () => {
+    //문법이랑 문맥점수 받아오기
     try {
-      const promises = data.DIALOG.map((e) =>
-        axios.post(`${SERVER_IP}/score`, {
-          input: e[0],
-          input2: e[2],
-        })
-      );
-      const results = await Promise.all(promises);
-      const totalScore = results.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue.data.grammer_score;
+      const newArray1Promises = data.DIALOG.map(async (e) => {
+        try {
+          const response = await axios.post(`${SERVER_IP}/grammer`, {
+            input: e[0],
+            id: data.USER[0],
+          });
+          return [...e, response.data.grammer];
+        } catch (error) {
+          console.error(error);
+          return e;
+        }
+      });
+
+      const newArray1 = await Promise.all(newArray1Promises);
+      setDia_log(newArray1);
+      dispatch(setDialog(newArray1));
+
+      const newContextResult = data.DIALOG.slice(1).map(async (e, i) => {
+        if (data.DIALOG.length > 1 && e.length > 2) {
+          const response = await axios.post(`${SERVER_IP}/context`, {
+            aisentence: data.DIALOG[i][1],
+            usersentenceinput: e[0],
+          });
+          return response.data.output;
+        } else return e;
+      });
+      const newArray2 = await Promise.all(newContextResult);
+      const total = newArray2.reduce((acc, curr) => {
+        return acc + curr;
       }, 0);
-      const averageScore = totalScore / results.length;
-      setGrammer_score(averageScore);
-      dispatch(setGraScore(averageScore));
+      const average = total / newArray2.length;
+      console.log(newArray2);
+      setDia_score(average);
+      dispatch(setDiaScore(average));
     } catch (error) {
       console.error(error);
     }
@@ -76,10 +126,16 @@ export default function MyScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.scoreContainer}>
-          <Text style={styles.scoreTitle}>점수</Text>
-          <Text style={styles.scoreText}>
-            문법 점수 : {Math.floor(grammer_score * 100) / 10}
-          </Text>
+          <Text style={styles.scoreTitle}>오늘의 점수</Text>
+          {grammer_score > 0 ? (
+            <Text style={styles.scoreText}>
+              문법 점수 : {Math.floor(grammer_score * 100) / 10}
+            </Text>
+          ) : (
+            <Text style={styles.scoreText}>
+              문법 점수 : Not enough talking.
+            </Text>
+          )}
           {grammer_score > 0 && (
             <Progress.Bar
               progress={grammer_score}
@@ -87,20 +143,30 @@ export default function MyScreen({ navigation }) {
               color="#FFB14E"
             />
           )}
-          <Text style={styles.scoreText}>
-            문맥 점수 : {Math.floor(grammer_score * 100) / 10}
-          </Text>
-          {grammer_score > 0 && (
-            <Progress.Bar
-              progress={grammer_score}
-              width={200}
-              color="#FFB14E"
-            />
+          {dia_score < 11 ? (
+            <Text style={styles.scoreText}>
+              문맥 점수 : {Math.floor(dia_score * 100) / 10}
+            </Text>
+          ) : (
+            <Text style={styles.scoreText}>
+              문맥 점수 : Not enough talking.
+            </Text>
           )}
-          <Text style={styles.scoreText}>
-            발음 점수 : {Math.floor(proScore * 100) / 10}
-          </Text>
-          {grammer_score > 0 && (
+
+          {dia_score < 11 && (
+            <Progress.Bar progress={dia_score} width={200} color="#FFB14E" />
+          )}
+          {proScore > 0 ? (
+            <Text style={styles.scoreText}>
+              발음 점수 : {Math.floor(proScore * 100) / 10}
+            </Text>
+          ) : (
+            <Text style={styles.scoreText}>
+              발음 점수 : Not enough talking.
+            </Text>
+          )}
+
+          {proScore > 0 && (
             <Progress.Bar progress={proScore} width={200} color="#FFB14E" />
           )}
         </View>
@@ -172,8 +238,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAEBD7",
     borderRadius: 10,
     marginTop: 35,
-    padding: 25,
+    paddingTop:17,
     width: 327,
+    height: 210,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -186,15 +253,16 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 4,
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 5,
   },
   scoreText: {
     fontWeight: "bold",
+    marginVertical:10,
   },
   memoContainer: {
     backgroundColor: "#FDF6E7",
     alignItems: "center",
-    marginTop: 50,
+    marginTop: 30,
     marginLeft: 210,
     marginBottom: 80,
     padding: 20,

@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
@@ -58,7 +58,7 @@ def chat(user_input , prevDialog):
     try:
         response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt= prevDialog+f"User: {user_input}\nAi: ""\n",
+            prompt= prevDialog+f"User: {user_input}\nAi: ""\nja-JP",
             temperature=0.5,
             max_tokens=150,
             top_p=1.0,
@@ -69,22 +69,36 @@ def chat(user_input , prevDialog):
         )
         ai_response = response.choices[0].text.strip()
         return ai_response
-            # print("love")
-            # response = openai.Completion.create(
-            #     engine="text-davinci-003",
-            #     prompt=f"User: {user_input}\n{language_code}AI:",
-            #     temperature=0.5,
-            #     max_tokens=150,
-            #     top_p=1.0,
-            #     frequency_penalty=0.0,
-            #     presence_penalty=0.0,
-            #     n=1,
-            #     stop=["User:"],
-            # )
-            # ai_response = response.choices[0].text.strip()
-            # return ai_response
     except Exception as e:
         return str(e)
+
+# def reviseGrammer(language, input):
+#     response = openai.Completion.create(
+#         model="text-davinci-003",
+#         prompt=f"Correct grammer in standard {language}:\n\n {input}.",
+#         temperature=0,
+#         max_tokens=60,
+#         top_p=1.0,
+#         frequency_penalty=0.0,
+#         presence_penalty=0.0
+#     )
+#     output = response.choices[0].text.strip().split('\n')
+#     if len(output) <= 2:
+#         return output[0]
+#     else:
+#         return output[2]
+
+
+
+
+# @app.route('/grammer', methods=['POST'])
+# def grammer():
+#     input = request.json.get('input')
+#     id = request.json.get('id')
+#     user = db.users.find_one({"id": id})
+#     language = user['language']
+#     output = reviseGrammer(language, input)
+#     return jsonify({"grammer": output})
 
 @app.route("/contextstart",methods=['POST'])
 def contextstart():
@@ -111,7 +125,7 @@ def signup():
     if db.users.find_one({"id": id}):
         return jsonify({"message": "Fail"})
     else : 
-        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 ,"list":[]})
+        db.users.insert_one({"id": id, "password": password, "name": name, "language": "ja-JP", "contextMode" : 0 ,"list":[], "credit":0, "item":[]})
         return jsonify({"message":"Success"})
 
 @app.route('/login', methods=['POST'])
@@ -120,7 +134,7 @@ def login():
     password = request.json.get('password')
     user = db.users.find_one({"id": id, "password": password})
     if user:
-        return jsonify({"message" : "Success", "id" : id, "language" : user["language"], "contextMode" : user["contextMode"], "list":user["list"]})
+        return jsonify({"message" : "Success", "id" : id, "language" : user["language"], "contextMode" : user["contextMode"], "list":user["list"], "credit":user['credit'], "item":user['item']})
     else :
         return jsonify({"message" : "Fail"})
 
@@ -179,8 +193,8 @@ def transcribe_audio():
     audio = synthesize_speech(chat_response, language_code)
     return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio, "pronunciation" : pronunciation}), 200
 
-@app.route('/evaluation', methods=['POST'])
-def evaluation():
+@app.route('/grammer', methods=['POST'])
+def grammer():
     input = request.json.get('input')
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
@@ -208,7 +222,6 @@ def score():
     replacements = ('', '', '')
     table = input2.maketrans(dict(zip(letters, replacements)))
     input2 = input2.translate(table)
-    input = input[0].upper() + input[1:]
     ratio = SequenceMatcher(None, input,input2 ).ratio()
     return jsonify({"grammer_score" : ratio})
 
@@ -216,7 +229,7 @@ def score():
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
-    return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list']}), 200
+    return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list'], "credit":user['credit'], "item":user['item']}), 200
 
 @app.route('/change_language',methods =['POST'] )
 def change_language():
@@ -243,12 +256,34 @@ def update_list():
     db.users.update_one({"id": id}, {"$set": {"list": list}})
     return jsonify({"message":"success"}),200
 
+@app.route('/context', methods=['POST'])
+def context():
+    aisentence = request.json.get('aisentence')
+    usersentence = request.json.get('usersentenceinput')
+    print(aisentence)
+    print(usersentence)
+    response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=f"{aisentence}\n{usersentence}\nIf the above two sentences are contextual, please just return 1,  if not enter 0",
+            temperature=0,
+            max_tokens=60,
+            top_p=1.0,
+            frequency_penalty=0.0,
+            presence_penalty=0.0
+        )
+        
+    output = response.choices[0].text.strip().split('\n')
+    output = [elem for elem in output if elem.isdigit()]
+    output = int(output[0])
+    print(output)
+    return jsonify({"output": output})
 
-@app.route('/credits', methods=['POST'])
-def get_user_credits():
-    id = request.json.get('id')
-    user = db.users.find_one({"id": id})
-    return jsonify({"credits": user["credit"]})
+
+# @app.route('/credits', methods=['POST'])
+# def get_user_credits():
+#     id = request.json.get('id')
+#     user = db.users.find_one({"id": id})
+#     return jsonify({"credits": user["credit"]})
 
 @app.route('/update-credits', methods=['POST'])
 def update_credits():
@@ -261,18 +296,20 @@ def update_credits():
 def update_purchase():
     id = request.json.get('id')
     items = request.json.get('items')
-
     db.purchases.insert_one({"id": id, "items": items})
     return jsonify({"message": "Success"})
 
-@app.route('/user-purchases', methods=['POST'])
-def get_user_purchases():
-    id = request.json.get('id')
-    purchases = db.purchases.find({"id": id})
-    purchases_list = []
-    for purchase in purchases:
-        purchases_list.append(purchase['items'])    
-    return jsonify({"purchases": purchases_list})
+# @app.route('/user-purchases', methods=['POST'])
+# def get_user_purchases():
+#     id = request.json.get('id')
+#     purchases = db.purchases.find({"id": id})
+#     purchases_list = []
+#     for purchase in purchases:
+#         purchases_list.append(purchase['items'])    
+#     return jsonify({"purchases": purchases_list})
+
+
+
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):

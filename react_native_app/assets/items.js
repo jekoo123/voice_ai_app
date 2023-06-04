@@ -1,5 +1,6 @@
 const initialData = [
   {
+    id: 0,
     title: "블레이저1",
     description: "리본을 착용한다.",
     purchased: false,
@@ -8,6 +9,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 1,
     title: "블레이저2",
     description: "",
     purchased: false,
@@ -16,6 +18,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 2,
     title: "페이스페인팅1",
     description: "",
     purchased: false,
@@ -24,6 +27,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 3,
     title: "페이스페인팅2",
     description: "셔츠에 약간의 무늬를 추가한다.",
     purchased: false,
@@ -32,6 +36,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 4,
     title: "반묶음",
     description: "",
     purchased: false,
@@ -40,6 +45,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 5,
     title: "모자",
     description: "",
     purchased: false,
@@ -48,6 +54,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 6,
     title: "헤드셋",
     description: "",
     purchased: false,
@@ -56,6 +63,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 7,
     title: "리본1",
     description: "",
     purchased: false,
@@ -64,6 +72,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 8,
     title: "리본2",
     description: "머리를 양갈래로 묶는다",
     purchased: false,
@@ -72,6 +81,7 @@ const initialData = [
     cost: 100,
   },
   {
+    id: 9,
     title: "리본3",
     description: "",
     purchased: false,

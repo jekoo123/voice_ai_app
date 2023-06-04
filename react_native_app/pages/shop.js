@@ -17,7 +17,7 @@ import initialData from "../assets/items";
 import axios from "axios";
 import { SERVER_IP } from "../config";
 import { useSelector, useDispatch } from "react-redux";
-
+import { setItem,addItem, setCredits } from "../storage/actions";
 const NUM_COLUMNS = 2;
 
 export default function ShopScreen() {
@@ -28,47 +28,58 @@ export default function ShopScreen() {
   const [data, setData] = useState(initialData);
   const [userCredits, setUserCredits] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const user_id = useSelector((state) => {
-    return state.id;
+  const reduxData = useSelector((state) => {
+    return state;
   });
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const fetchUserCredits = async () => {
-      try {
-        const response = await axios.post(`${SERVER_IP}/credits`, {
-          id: user_id,
-        });
-        setUserCredits(response.data.credits);
-      } catch (error) {
-        console.log("Error fetching user credits:", error);
+    const updatedData = data.map((item) => {
+      if (reduxData.ITEM.includes(item.id)) {
+        return { ...item, purchased: true };
       }
-    };
-      const fetchUserPurchases = async () => {
-        try {
-          const response = await axios.post(`${SERVER_IP}/user-purchases`, {
-            id: user_id,
-          });
-    
-          const purchasedItems = response.data.purchases;
-    
-          const updatedData = data.map((item) => {
-            if (purchasedItems.includes(item.title)) {
-              return { ...item, purchased: true };
-            }
-            return item;
-          });
-    
-          setData(updatedData);
-        } catch (error) {
-          console.log("Error fetching user purchases:", error);
-        }
-      };
-    
-      fetchUserPurchases();
-      fetchUserCredits();
-    }, []);
-    
+      return item;
+    });
+
+    setUserCredits(reduxData.CREDIT);
+    setData(updatedData);
+  }, []);
+
+  // useEffect(() => {
+  //   const fetchUserCredits = async () => {
+  //     try {
+  //       const response = await axios.post(`${SERVER_IP}/credits`, {
+  //         id: user_id,
+  //       });
+  //       setUserCredits(response.data.credits);
+  //     } catch (error) {
+  //       console.log("Error fetching user credits:", error);
+  //     }
+  //   };
+  //   const fetchUserPurchases = async () => {
+  //     try {
+  //       const response = await axios.post(`${SERVER_IP}/user-purchases`, {
+  //         id: user_id,
+  //       });
+
+  //       const purchasedItems = response.data.purchases;
+
+  //       const updatedData = data.map((item) => {
+  //         if (purchasedItems.includes(item.title)) {
+  //           return { ...item, purchased: true };
+  //         }
+  //         return item;
+  //       });
+
+  //       setData(updatedData);
+  //     } catch (error) {
+  //       console.log("Error fetching user purchases:", error);
+  //     }
+  //   };
+
+  //   fetchUserPurchases();
+  //   fetchUserCredits();
+  // }, []);
 
   const renderItem = ({ item, onPress }) => (
     <TouchableOpacity onPress={onPress}>
@@ -96,55 +107,53 @@ export default function ShopScreen() {
   };
   const handlePurchase = async () => {
     if (userCredits >= selectedItem.cost) {
-      // Deduct the item's cost from the user's credits
       const updatedCredits = userCredits - selectedItem.cost;
       setUserCredits(updatedCredits);
-  
-      // Set the item as purchased
+      dispatch(setCredits(updatedCredits));
       const updatedData = data.map((item) => {
-        if (item.title === selectedItem.title) {
+        if (item.id === selectedItem.id) {
           return { ...item, purchased: true };
         }
         return item;
       });
-  
-      // Update the data and close the modal
       setData(updatedData);
       setModalVisible(false);
-  
+      if(!reduxData.ITEM.includes(selectedItem.id)){
+        dispatch(addItem(selectedItem.id));
+      }
+    
       try {
-        // Send the updated credits to the server
         await axios.post(`${SERVER_IP}/update-credits`, {
-          id: user_id,
+          id: reduxData.USER[0],
           credits: updatedCredits,
         });
         console.log("User credits updated in the server's database");
       } catch (error) {
         console.log("Error updating user credits in the server:", error);
       }
-  
+
       try {
-        // Send the purchase information to the server
         await axios.post(`${SERVER_IP}/update-purchase`, {
-          id: user_id,
-          items: selectedItem.title,
+          id: reduxData.USER[0],
+          items: selectedItem.id,
         });
         console.log("User purchase updated in the server's database");
       } catch (error) {
         console.log("Error updating user purchase in the server:", error);
       }
     } else {
-      // Display an error or notification if the user doesn't have enough credits
       console.log("Insufficient credits");
     }
   };
-  
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.creditsText}>
-          <Image source={require("../assets/credit.png")} style={styles.creditImage} />
+          <Image
+            source={require("../assets/credit.png")}
+            style={styles.creditImage}
+          />
           <Text style={styles.creditsValue}>{userCredits}</Text>
         </Text>
       </View>
@@ -172,9 +181,15 @@ export default function ShopScreen() {
 
                 {!selectedItem.purchased && (
                   <View style={styles.questionBox}>
-                    <Text style={styles.questionText}>구매하시겠습니까? (가격: {selectedItem.cost} credits)</Text>
+                    <Text style={styles.questionText}>
+                      구매하시겠습니까? (가격: {selectedItem.cost} credits)
+                    </Text>
                     <View style={styles.buttonContainer}>
-                      <Button title="구매" onPress={handlePurchase} color={styles.purchaseButton.backgroundColor} />
+                      <Button
+                        title="구매"
+                        onPress={handlePurchase}
+                        color={styles.purchaseButton.backgroundColor}
+                      />
                       <Button
                         title="취소"
                         onPress={() => setModalVisible(false)}
@@ -311,8 +326,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "black",
   },
-  itemImage: {
-  },
+  itemImage: {},
   purchasedItemContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.5)",
   },

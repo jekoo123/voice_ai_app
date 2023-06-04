@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
-import { setUser,settingSave } from "../storage/actions";
+import { setCredit, setItem, setUser,settingSave } from "../storage/actions";
 import axios from "axios";
 import { SERVER_IP } from "../config";
 
@@ -40,6 +40,8 @@ export default function HomeScreen({ navigation }) {
       temp = [savedId, response.data.language, response.data.context]
       dispatch(setUser(temp));
       dispatch(settingSave(response.data.list));
+      dispatch(setCredit(response.data.credit));
+      dispatch(setItem(response.data.item));
     } catch (error) {}
   };
   return (
