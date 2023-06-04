@@ -10,6 +10,10 @@ import {
   DELETE_SAVE,
   SET_GRA_SCORE,
   SET_PRO_SCORE,
+  SET_DIA_SCORE,
+  SET_CREDIT,
+  SET_ITEM,
+  ADD_ITEM,
   RESET_STATE
 } from "./actions";
 
@@ -18,7 +22,10 @@ const initialState = {
   USER: [],
   SAVE: [],
   PRO_SCORE: [],
-  GRA_SCORE: [],
+  GRA_SCORE: 0,
+  DIA_SCORE: 0,
+  CREDIT : 0,
+  ITEM:[],
 };
 
 function rootReducer(state = initialState, action) {
@@ -59,7 +66,14 @@ function rootReducer(state = initialState, action) {
       return { ...state, PRO_SCORE: [...state.PRO_SCORE, action.payload] };
     case SET_GRA_SCORE:
       return { ...state, GRA_SCORE: action.payload };
-
+    case SET_DIA_SCORE:
+      return { ...state, DIA_SCORE: action.payload };
+    case SET_CREDIT :
+      return { ...state, CREDIT: action.payload };
+    case SET_ITEM : 
+      return { ...state, ITEM: action.payload };
+    case ADD_ITEM :
+      return { ...state, ITEM: [...state.ITEM, action.payload] };
     case RESET_STATE:
       return initialState;
     default:
