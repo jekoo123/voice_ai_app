@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
@@ -26,12 +26,16 @@ cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.
 db = cluster["voice_ai_app"]
 
 def synthesize_speech(text, language_code):
+    name = "ja-JP-Neural2-B"
+    if language_code == "en-US":
+        name="en-US-Studio-O"
     startTime= time.time()
     client = texttospeech.TextToSpeechClient(credentials=credentials)
     synthesis_input = texttospeech.SynthesisInput(text=text)
     voice = texttospeech.VoiceSelectionParams(
         language_code=language_code, 
-        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
+        ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
+        name = name
     )
     audio_config = texttospeech.AudioConfig(
         audio_encoding=texttospeech.AudioEncoding.MP3
@@ -147,7 +151,6 @@ def transcribe_audio():
     transcription_text = ""
     pronunciation = 0
     prevDialog = request.form.get('prevDialog')
-    print(prevDialog)
     file = request.files['file']
     filename = secure_filename(file.filename)
     file_path = os.path.join("uploads", filename)
@@ -218,6 +221,7 @@ def grammer():
 def score():
     input = request.json.get('input')
     input2 = request.json.get('input2')
+    # print(input2)
     letters = ('?', ',', '.')
     replacements = ('', '', '')
     table = input2.maketrans(dict(zip(letters, replacements)))
@@ -243,10 +247,8 @@ def change_language():
 def get_flow_flag():
     id = request.json.get('id')
     flow_flag = request.json.get('flow_flag')
-    print("in /flow_flag", flow_flag)
     db.users.update_one({"id": id}, {"$set": {"contextMode": flow_flag}})
     user = db.users.find_one({"id": id})
-    print("in db",user['contextMode'])
     return jsonify({"contextMode":user['contextMode']}),200
 
 @app.route('/update_list',methods =['POST'] )
@@ -275,15 +277,8 @@ def context():
     output = response.choices[0].text.strip().split('\n')
     output = [elem for elem in output if elem.isdigit()]
     output = int(output[0])
-    print(output)
+    
     return jsonify({"output": output})
-
-
-# @app.route('/credits', methods=['POST'])
-# def get_user_credits():
-#     id = request.json.get('id')
-#     user = db.users.find_one({"id": id})
-#     return jsonify({"credits": user["credit"]})
 
 @app.route('/update-credits', methods=['POST'])
 def update_credits():
@@ -296,20 +291,8 @@ def update_credits():
 def update_purchase():
     id = request.json.get('id')
     items = request.json.get('items')
-    db.purchases.insert_one({"id": id, "items": items})
+    db.users.update_one({"id": id}, {"$push": {"items": items}})
     return jsonify({"message": "Success"})
-
-# @app.route('/user-purchases', methods=['POST'])
-# def get_user_purchases():
-#     id = request.json.get('id')
-#     purchases = db.purchases.find({"id": id})
-#     purchases_list = []
-#     for purchase in purchases:
-#         purchases_list.append(purchase['items'])    
-#     return jsonify({"purchases": purchases_list})
-
-
-
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
