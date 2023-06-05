@@ -17,13 +17,10 @@ import initialData from "../assets/items";
 import axios from "axios";
 import { SERVER_IP } from "../config";
 import { useSelector, useDispatch } from "react-redux";
-import { setItem, equip, addItem, setCredit } from "../storage/actions";
+import { equip, addItem, setCredit } from "../storage/actions";
 const NUM_COLUMNS = 2;
 
 export default function ShopScreen() {
-  const windowWidth = Dimensions.get("window").width;
-  const itemWidth = windowWidth / NUM_COLUMNS;
-
   const [selectedItem, setSelectedItem] = useState(null);
   const [data, setData] = useState(initialData);
   const [userCredits, setUserCredits] = useState(null);
@@ -36,15 +33,17 @@ export default function ShopScreen() {
 
   useEffect(() => {
     setUserCredits(reduxData.CREDIT);
+    const updatedData = data.map((item) => {
+      if (reduxData.ITEM.includes(item.id)) {
+        return { ...item, purchased: true };
+      }
+      return item;
+    });
+    setData(updatedData);
+  }, []);
 
+  const updateCredit = () => {
     const updateDataAndCredits = async () => {
-      const updatedData = data.map((item) => {
-        if (reduxData.ITEM.includes(item.id)) {
-          return { ...item, purchased: true };
-        }
-        return item;
-      });
-      setData(updatedData);
       const updatedCredits = reduxData.CREDIT + reduxData.POINT;
       try {
         await axios.post(`${SERVER_IP}/update-credits`, {
@@ -56,46 +55,12 @@ export default function ShopScreen() {
         console.log("Error updating user credits in the server:", error);
       }
       setUserCredits(updatedCredits);
+      dispatch(setCredit(updatedCredits));
     };
 
     updateDataAndCredits();
-  }, []);
+  };
 
-  // useEffect(() => {
-  //   const fetchUserCredits = async () => {
-  //     try {
-  //       const response = await axios.post(`${SERVER_IP}/credits`, {
-  //         id: user_id,
-  //       });
-  //       setUserCredits(response.data.credits);
-  //     } catch (error) {
-  //       console.log("Error fetching user credits:", error);
-  //     }
-  //   };
-  //   const fetchUserPurchases = async () => {
-  //     try {
-  //       const response = await axios.post(`${SERVER_IP}/user-purchases`, {
-  //         id: user_id,
-  //       });
-
-  //       const purchasedItems = response.data.purchases;
-
-  //       const updatedData = data.map((item) => {
-  //         if (purchasedItems.includes(item.title)) {
-  //           return { ...item, purchased: true };
-  //         }
-  //         return item;
-  //       });
-
-  //       setData(updatedData);
-  //     } catch (error) {
-  //       console.log("Error fetching user purchases:", error);
-  //     }
-  //   };
-
-  //   fetchUserPurchases();
-  //   fetchUserCredits();
-  // }, []);
   const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() =>
@@ -132,7 +97,7 @@ export default function ShopScreen() {
   const handleEquip = async () => {
     dispatch(equip(selectedItem.id));
     try {
-      await axios.post(`${SERVER_IP}/update-equip`, {
+      await axios.post(`${SERVER_IP}/equip`, {
         id: reduxData.USER[0],
         equip: selectedItem.id,
       });
@@ -190,8 +155,10 @@ export default function ShopScreen() {
           source={require("../assets/credit.png")}
           style={styles.creditImage}
         />
-          <Text style={styles.creditsValue}>{userCredits}</Text>
-
+        <Text style={styles.creditsValue}>{userCredits}</Text>
+        <TouchableOpacity style={styles.getPoint} onPress={updateCredit}>
+          <Text>Get Point</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.contentsContainer}>
         <FlatList
@@ -222,7 +189,7 @@ export default function ShopScreen() {
             {selectedItem && (
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-                <Text>{selectedItem.description}</Text>
+                {/* <Text>{selectedItem.description}</Text> */}
 
                 {!selectedItem.purchased && (
                   <View style={styles.questionBox}>
@@ -269,6 +236,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
+    backgroundColor: '#f2f2f2',  // 배경색 변경
+    shadowColor: "#000",  // 그림자 색상
+    shadowOffset: { width: 0, height: 2 },  // 그림자 오프셋
+    shadowOpacity: 0.25,  // 그림자 투명도
+    shadowRadius: 3.84,  // 그림자 반경
+    elevation: 5, 
   },
   creditImage: {
     width: 25,
@@ -366,9 +339,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "black",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
   },
-  itemImage: {},
+  
   purchasedItemContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
+  getPoint:{
+    position: "absolute",
+    right:10,
+    paddingHorizontal:10,
+    paddingVertical:5,
+    backgroundColor: "#FDF6E7",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+
 });

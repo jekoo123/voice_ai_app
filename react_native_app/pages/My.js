@@ -4,7 +4,13 @@ import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useSelector, useDispatch } from "react-redux";
-import { setDialog, setGraScore, setDiaScore, setPoint } from "../storage/actions";
+import {
+  setDialog,
+  setGraScore,
+  setDiaScore,
+  setPoint,
+  pointRef,
+} from "../storage/actions";
 import words from "../assets/words";
 import * as Progress from "react-native-progress";
 
@@ -14,7 +20,7 @@ export default function MyScreen({ navigation }) {
   const [dia_log, setDia_log] = useState([]);
   const [dia_score, setDia_score] = useState(11);
   const [proScore, setProScore] = useState(0);
-  const [point,set_Point] = useState(0);
+  const [point, set_Point] = useState(0);
   const dispatch = useDispatch();
 
   const data = useSelector((state) => {
@@ -23,6 +29,7 @@ export default function MyScreen({ navigation }) {
 
   useEffect(() => {
     setDia_log(data.DIALOG);
+    console.log(dia_score);
     if (data.DIALOG.length > 1) {
       receiveScore();
       setProScore(computePronuncitaionScore());
@@ -51,7 +58,7 @@ export default function MyScreen({ navigation }) {
       setGrammer_score(averageScore);
       dispatch(setGraScore(averageScore));
     };
-
+  
     if (dia_log.length > 0) {
       if (dia_log[dia_log.length - 1].length > 2) {
         fetchData();
@@ -59,6 +66,7 @@ export default function MyScreen({ navigation }) {
     }
   }, [dia_log]);
   useEffect(() => {
+
     const fetchContextScore = async () => {
       const newContextResult = dia_log.slice(1).map(async (e, i) => {
         try {
@@ -76,22 +84,41 @@ export default function MyScreen({ navigation }) {
         return curr ? acc + curr : acc;
       }, 0);
       const average = total / newArray2.length;
-      console.log(newArray2);
       setDia_score(average);
       dispatch(setDiaScore(average));
     };
-  
-    if (grammer_score > 0) {
-      fetchContextScore();
+
+    if(data.DIALOG){
+      if (data.DIALOG.length > 1) {
+        fetchContextScore();
+      }
     }
+    
   }, [grammer_score]);
-  
-  useEffect(()=>{
-    if(dia_score > 0){
-      set_Point(Math.floor((dia_score + grammer_score + proScore)/3*100))
-      dispatch(setPoint(Math.floor((dia_score + grammer_score + proScore)/3*100)))
+
+  useEffect(() => {
+    if (dia_score) {
+      if (dia_score > 0) {
+        set_Point(
+          Math.floor(
+            (dia_score + grammer_score + proScore) *
+              (data.DIALOG.length - data.POINT_REF) *
+              10
+          )
+        );
+        dispatch(
+          setPoint(
+            Math.floor(
+              (dia_score + grammer_score + proScore) *
+                (data.DIALOG.length - data.POINT_REF) *
+                10
+            )
+          )
+        );
+        dispatch(pointRef(data.DIALOG.length));
+      }
     }
-  },[dia_score])
+  }, [dia_score]);
 
   let previousIndex = -1;
   function printNextProverb() {
@@ -144,48 +171,57 @@ export default function MyScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.scoreContainer}>
+
           <Text style={styles.scoreTitle}>오늘의 점수 : {point}</Text>
+          <View style={styles.scoreSmallTitle}>
+            <Text style={styles.scoreText}>문법 점수 :</Text>
+            {grammer_score > 0 && (
+              <Text style={styles.scoreText}>
+                {" "}
+                {Math.floor(grammer_score * 100) / 10}
+              </Text>
+            )}
+          </View>
+
           {grammer_score > 0 ? (
-            <Text style={styles.scoreText}>
-              문법 점수 : {Math.floor(grammer_score * 100) / 10}
-            </Text>
-          ) : (
-            <Text style={styles.scoreText}>
-              문법 점수 : Loading or Not enough talking.
-            </Text>
-          )}
-          {grammer_score > 0 && (
             <Progress.Bar
               progress={grammer_score}
               width={200}
               color="#FFB14E"
             />
-          )}
-          {dia_score < 11 ? (
-            <Text style={styles.scoreText}>
-              문맥 점수 : {Math.floor(dia_score * 100) / 10}
-            </Text>
           ) : (
-            <Text style={styles.scoreText}>
-              문맥 점수 : Loading or Not enough talking.
-            </Text>
+            <Text>Loading or Not enough talking.</Text>
           )}
+          <View style={styles.scoreSmallTitle}>
+            <Text style={styles.scoreText}>문맥 점수 :</Text>
+            {0<dia_score&&dia_score < 11 && (
+              <Text style={styles.scoreText}>
+                {" "}
+                {Math.floor(dia_score * 100) / 10}
+              </Text>
+            )}
+          </View>
 
-          {dia_score < 11 && (
+          {0<dia_score && dia_score< 11 ? (
             <Progress.Bar progress={dia_score} width={200} color="#FFB14E" />
-          )}
-          {proScore > 0 ? (
-            <Text style={styles.scoreText}>
-              발음 점수 : {Math.floor(proScore * 100) / 10}
-            </Text>
           ) : (
-            <Text style={styles.scoreText}>
-              발음 점수 : Loading or Not enough talking.
-            </Text>
+            <Text>Loading or Not enough talking.</Text>
           )}
 
-          {proScore > 0 && (
+          <View style={styles.scoreSmallTitle}>
+            <Text style={styles.scoreText}>발음 점수 :</Text>
+            {proScore > 0 && (
+              <Text style={styles.scoreText}>
+                {" "}
+                {Math.floor(proScore * 100) / 10}
+              </Text>
+            )}
+          </View>
+
+          {proScore > 0 ? (
             <Progress.Bar progress={proScore} width={200} color="#FFB14E" />
+          ) : (
+            <Text>Loading or Not enough talking.</Text>
           )}
         </View>
         <TouchableOpacity
@@ -219,7 +255,7 @@ const styles = StyleSheet.create({
   todayContainer: {
     backgroundColor: "#FFE4AF",
     borderRadius: 10,
-    marginTop: 40,
+    marginTop: 25,
     padding: 20,
     width: 327,
     alignItems: "center",
@@ -255,10 +291,10 @@ const styles = StyleSheet.create({
   scoreContainer: {
     backgroundColor: "#FAEBD7",
     borderRadius: 10,
-    marginTop: 35,
+    marginTop: 25,
     paddingTop: 17,
     width: 327,
-    height: 210,
+    height: 250,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -267,11 +303,25 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   scoreTitle: {
+    backgroundColor: "#FFE4AF",
     fontSize: 20,
     fontWeight: "800",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
     letterSpacing: 4,
     textAlign: "center",
-    marginBottom: 5,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  scoreSmallTitle: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
   scoreText: {
     fontWeight: "bold",
@@ -280,7 +330,7 @@ const styles = StyleSheet.create({
   memoContainer: {
     backgroundColor: "#FDF6E7",
     alignItems: "center",
-    marginTop: 30,
+    marginTop: 20,
     marginLeft: 210,
     marginBottom: 80,
     padding: 20,

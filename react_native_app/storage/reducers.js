@@ -15,6 +15,7 @@ import {
   SET_ITEM,
   ADD_ITEM,
   SET_POINT,
+  POINT_REF,
   EQUIP,
   RESET_STATE,
 } from "./actions";
@@ -27,6 +28,7 @@ const initialState = {
   GRA_SCORE: 0,
   DIA_SCORE: 0,
   CREDIT: 0,
+  POINT_REF: 0,
   ITEM: [],
   EQUIP: 0,
   POINT: 0,
@@ -80,6 +82,8 @@ function rootReducer(state = initialState, action) {
       return { ...state, ITEM: [...state.ITEM, action.payload] };
     case SET_POINT:
       return { ...state, POINT: action.payload };
+    case POINT_REF:
+      return { ...state, POINT_REF: action.payload };
     case EQUIP:
       return { ...state, EQUIP: action.payload };
     case RESET_STATE:

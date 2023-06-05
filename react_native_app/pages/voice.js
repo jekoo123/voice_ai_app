@@ -12,6 +12,7 @@ import { Audio } from "expo-av";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
 import { useDispatch, useSelector } from "react-redux";
+import { useIsFocused } from "@react-navigation/native";
 import { addDialog, setProScore } from "../storage/actions";
 import * as FileSystem from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,6 +20,7 @@ import initialData from "../assets/items";
 // import { useIsFocused } from "@react-navigation/native";
 
 export default function VoiceScreen() {
+  const isFocused = useIsFocused();
   const [recording, setRecording] = useState();
   const [isRecording, setIsRecording] = useState(false);
   const [img, setImg] = useState(0);
@@ -26,6 +28,7 @@ export default function VoiceScreen() {
   const [dialog, setDialog] = useState([]);
   const [isAiTaking, setIsAiTaking] = useState(false);
   const [equipItem, setEquipItem] = useState(null);
+
   const data = useSelector((state) => {
     return state;
   });
@@ -36,6 +39,17 @@ export default function VoiceScreen() {
       makingDialog(data.DIALOG);
     }
   }, []);
+
+  useEffect(()=>{
+    if(isFocused){
+      const image = initialData.find((item) => item.id === data.EQUIP);
+
+      setEquipItem(image);
+
+    }
+
+
+  },[isFocused])
 
   const makingDialog = (array) => {
     const temp = array
@@ -201,8 +215,8 @@ export default function VoiceScreen() {
         img === 0
           ? equipItem?.backgroundImage_default
           : img === 1
-          ? require("../assets/Ai_listening.png")
-          : require("../assets/Ai_talking.png")
+          ? equipItem?.backgroundImage_listening
+          : equipItem?.backgroundImage_talking
       }
     >
       <View style={styles.container}>
