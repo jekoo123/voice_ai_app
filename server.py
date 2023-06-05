@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = ""
+openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
@@ -75,34 +75,6 @@ def chat(user_input , prevDialog):
         return ai_response
     except Exception as e:
         return str(e)
-
-# def reviseGrammer(language, input):
-#     response = openai.Completion.create(
-#         model="text-davinci-003",
-#         prompt=f"Correct grammer in standard {language}:\n\n {input}.",
-#         temperature=0,
-#         max_tokens=60,
-#         top_p=1.0,
-#         frequency_penalty=0.0,
-#         presence_penalty=0.0
-#     )
-#     output = response.choices[0].text.strip().split('\n')
-#     if len(output) <= 2:
-#         return output[0]
-#     else:
-#         return output[2]
-
-
-
-
-# @app.route('/grammer', methods=['POST'])
-# def grammer():
-#     input = request.json.get('input')
-#     id = request.json.get('id')
-#     user = db.users.find_one({"id": id})
-#     language = user['language']
-#     output = reviseGrammer(language, input)
-#     return jsonify({"grammer": output})
 
 @app.route("/contextstart",methods=['POST'])
 def contextstart():
