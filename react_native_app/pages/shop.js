@@ -214,9 +214,10 @@ export default function ShopScreen() {
           <View style={styles.modalContainer}>
             {selectedItem && (
               <View style={styles.modalContent}>
+                <View style={styles.modalTitleContainer}>
                 <Text style={styles.modalTitle}>{selectedItem.title}</Text>
                 {/* <Text>{selectedItem.description}</Text> */}
-
+                </View>
                 {!selectedItem.purchased && (
                   <View style={styles.questionBox}>
                     <Text style={styles.questionText}>
@@ -325,10 +326,16 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
+    textAlign: "center",
+    backgroundColor: "#FFEAEA",
+    width: Dimensions.get("window").width * 0.8,
+    height: Dimensions.get("window").height * 0.04,
   },
   questionBox: {
     alignItems: "center",
+    backgroundColor: "#FFF6F6",
+    width: "116%",
+    height: Dimensions.get("window").height * 0.12,
   },
   questionText: {
     fontSize: 16,
