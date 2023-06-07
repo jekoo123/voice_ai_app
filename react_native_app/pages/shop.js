@@ -147,6 +147,7 @@ export default function ShopScreen() {
       console.log("Insufficient credits");
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -170,16 +171,41 @@ export default function ShopScreen() {
           contentContainerStyle={styles.contentContainer}
         />
         <Modal
-          visible={equipModalVisible}
-          animationType="slide"
-          onRequestClose={() => setEquipModalVisible(false)}
-        >
-          <View>
-            <Text>장착하시겠습니까?</Text>
-            <Button title="장착" onPress={handleEquip} />
-            <Button title="취소" onPress={() => setEquipModalVisible(false)} />
+  visible={equipModalVisible}
+  animationType="slide"
+  onRequestClose={() => setEquipModalVisible(false)}
+>
+  <View style={styles.modalContainer}>
+    {selectedItem && (
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+        {/* <Text>{selectedItem.description}</Text> */}
+        
+        <View style={styles.questionBox}>
+          <Text style={styles.questionText}>
+            장착하시겠습니까?
+          </Text>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="장착"
+              onPress={handleEquip}
+              color={styles.equipButton.backgroundColor}
+            />
+            <Button
+              title="취소"
+              onPress={() => setEquipModalVisible(false)}
+              color={styles.cancelButton.backgroundColor}
+            />
           </View>
-        </Modal>
+        </View>
+        
+        {selectedItem.purchased && (
+          <Text style={styles.purchasedLabel}>구매 완료</Text>
+        )}
+      </View>
+    )}
+  </View>
+</Modal>
         <Modal
           visible={purchaseModalVisible}
           animationType="slide"
@@ -327,6 +353,9 @@ const styles = StyleSheet.create({
   },
   purchaseButton: {
     backgroundColor: "#6666FF",
+  },
+  equipButton: {
+    backgroundColor: "#FF8989",
   },
   cancelButton: {
     backgroundColor: "darkgray",
