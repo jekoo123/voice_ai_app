@@ -18,7 +18,7 @@ export default function MyScreen({ navigation }) {
   const [daysentence, setDaysentence] = useState(words[0]);
   const [grammer_score, setGrammer_score] = useState(0);
   const [dia_log, setDia_log] = useState([]);
-  const [dia_score, setDia_score] = useState(11);
+  const [dia_score, setDia_score] = useState(-1);
   const [proScore, setProScore] = useState(0);
   const [point, set_Point] = useState(0);
   const dispatch = useDispatch();
@@ -29,7 +29,6 @@ export default function MyScreen({ navigation }) {
 
   useEffect(() => {
     setDia_log(data.DIALOG);
-    console.log(dia_score);
     if (data.DIALOG.length > 1) {
       receiveScore();
       setProScore(computePronuncitaionScore());
@@ -65,8 +64,8 @@ export default function MyScreen({ navigation }) {
       }
     }
   }, [dia_log]);
-  useEffect(() => {
 
+  useEffect(() => {
     const fetchContextScore = async () => {
       const newContextResult = dia_log.slice(1).map(async (e, i) => {
         try {
@@ -87,9 +86,10 @@ export default function MyScreen({ navigation }) {
       setDia_score(average);
       dispatch(setDiaScore(average));
     };
-
+  
     if(data.DIALOG){
       if (data.DIALOG.length > 1) {
+        
         fetchContextScore();
       }
     }
@@ -97,15 +97,16 @@ export default function MyScreen({ navigation }) {
   }, [grammer_score]);
 
   useEffect(() => {
-    if (dia_score) {
-      if (dia_score > 0) {
+      if (dia_score > -1) {
+        console.log(dia_score);
+        console.log("a");
         set_Point(
           Math.floor(
             (dia_score + grammer_score + proScore) *
-              (data.DIALOG.length - data.POINT_REF) *
+              (data.DIALOG.length) *
               10
           )
-        );
+        );  
         dispatch(
           setPoint(
             Math.floor(
@@ -116,7 +117,7 @@ export default function MyScreen({ navigation }) {
           )
         );
         dispatch(pointRef(data.DIALOG.length));
-      }
+      
     }
   }, [dia_score]);
 
@@ -194,7 +195,7 @@ export default function MyScreen({ navigation }) {
           )}
           <View style={styles.scoreSmallTitle}>
             <Text style={styles.scoreText}>문맥 점수 :</Text>
-            {0<dia_score&&dia_score < 11 && (
+            {0<=dia_score && (
               <Text style={styles.scoreText}>
                 {" "}
                 {Math.floor(dia_score * 100) / 10}
@@ -202,7 +203,7 @@ export default function MyScreen({ navigation }) {
             )}
           </View>
 
-          {0<dia_score && dia_score< 11 ? (
+          {0<= dia_score ? (
             <Progress.Bar progress={dia_score} width={200} color="#FFB14E" />
           ) : (
             <Text>Loading or Not enough talking.</Text>

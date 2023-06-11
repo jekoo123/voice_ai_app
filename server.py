@@ -17,7 +17,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 
 # OpenAI API 키 설정
-openai.api_key = "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"
+openai.api_key = "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"
 client_file = 'sa_speech_demo.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)

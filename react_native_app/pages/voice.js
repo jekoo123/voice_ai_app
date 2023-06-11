@@ -173,42 +173,6 @@ export default function VoiceScreen() {
   };
 
   return (
-    // <ImageBackground
-    //   style={styles.voice_screen}
-    //   source={
-    //     equipItem.backgroundImage === null
-    //       ? require("../assets/Ai_default.png")
-    //       : equipItem.backgroundImage
-
-    //     // img === 0
-    //     //   ? equipItem.backgroundImage
-    //     //   : img === 1
-    //     //   ? require("../assets/Ai_listening.png")
-    //     //   : require("../assets/Ai_talking.png")
-    //   }
-    // >
-
-    //     <ImageBackground
-    //   style={styles.voice_screen}
-    //   source={
-    //     img === 0
-    //       ? equipItem.backgroundImage
-    //       : img === 1
-    //       ? require("../assets/Ai_listening.png")
-    //       : require("../assets/Ai_talking.png")
-    //   }
-    // >
-    // <ImageBackground
-    //   style={styles.voice_screen}
-    //   source={
-    //     img === 0
-    //       ? require("../assets/Ai_default.png")
-    //       : img === 1
-    //       ? require("../assets/Ai_listening.png")
-    //       : require("../assets/Ai_talking.png")
-    //   }
-    // >
-
     <ImageBackground
       style={styles.voice_screen}
       source={

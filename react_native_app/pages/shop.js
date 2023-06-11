@@ -17,7 +17,13 @@ import initialData from "../assets/items";
 import axios from "axios";
 import { SERVER_IP } from "../config";
 import { useSelector, useDispatch } from "react-redux";
-import { equip, addItem, setCredit } from "../storage/actions";
+import {
+  equip,
+  addItem,
+  pointRef,
+  setCredit,
+  setPoint,
+} from "../storage/actions";
 const NUM_COLUMNS = 2;
 
 export default function ShopScreen() {
@@ -59,6 +65,8 @@ export default function ShopScreen() {
     };
 
     updateDataAndCredits();
+    dispatch(pointRef(reduxData.DIALOG.length));
+    dispatch(setPoint(0));
   };
 
   const renderItem = ({ item }) => (
@@ -147,7 +155,6 @@ export default function ShopScreen() {
       console.log("Insufficient credits");
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -171,41 +178,40 @@ export default function ShopScreen() {
           contentContainerStyle={styles.contentContainer}
         />
         <Modal
-  visible={equipModalVisible}
-  animationType="slide"
-  onRequestClose={() => setEquipModalVisible(false)}
->
-  <View style={styles.modalContainer}>
-    {selectedItem && (
-      <View style={styles.modalContent}>
-        <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-        {/* <Text>{selectedItem.description}</Text> */}
-        
-        <View style={styles.questionBox}>
-          <Text style={styles.questionText}>
-            장착하시겠습니까?
-          </Text>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="장착"
-              onPress={handleEquip}
-              color={styles.equipButton.backgroundColor}
-            />
-            <Button
-              title="취소"
-              onPress={() => setEquipModalVisible(false)}
-              color={styles.cancelButton.backgroundColor}
-            />
+          visible={equipModalVisible}
+          animationType="slide"
+          onRequestClose={() => setEquipModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            {selectedItem && (
+              <View style={styles.modalContent}>
+                <View style={styles.modalTitleContainer}>
+                  <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+                  {/* <Text>{selectedItem.description}</Text> */}
+                </View>
+                <View style={styles.questionBox}>
+                  <Text style={styles.questionText}>장착하시겠습니까?</Text>
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      title="장착"
+                      onPress={handleEquip}
+                      color={styles.equipButton.backgroundColor}
+                    />
+                    <Button
+                      title="취소"
+                      onPress={() => setEquipModalVisible(false)}
+                      color={styles.cancelButton.backgroundColor}
+                    />
+                  </View>
+                </View>
+
+                {selectedItem.purchased && (
+                  <Text style={styles.purchasedLabel}>구매 완료</Text>
+                )}
+              </View>
+            )}
           </View>
-        </View>
-        
-        {selectedItem.purchased && (
-          <Text style={styles.purchasedLabel}>구매 완료</Text>
-        )}
-      </View>
-    )}
-  </View>
-</Modal>
+        </Modal>
         <Modal
           visible={purchaseModalVisible}
           animationType="slide"
@@ -215,8 +221,8 @@ export default function ShopScreen() {
             {selectedItem && (
               <View style={styles.modalContent}>
                 <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>{selectedItem.title}</Text>
-                {/* <Text>{selectedItem.description}</Text> */}
+                  <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+                  {/* <Text>{selectedItem.description}</Text> */}
                 </View>
                 {!selectedItem.purchased && (
                   <View style={styles.questionBox}>
@@ -263,12 +269,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    backgroundColor: '#f2f2f2',  // 배경색 변경
-    shadowColor: "#000",  // 그림자 색상
-    shadowOffset: { width: 0, height: 2 },  // 그림자 오프셋
-    shadowOpacity: 0.25,  // 그림자 투명도
-    shadowRadius: 3.84,  // 그림자 반경
-    elevation: 5, 
+    backgroundColor: "#f2f2f2", // 배경색 변경
+    shadowColor: "#000", // 그림자 색상
+    shadowOffset: { width: 0, height: 2 }, // 그림자 오프셋
+    shadowOpacity: 0.25, // 그림자 투명도
+    shadowRadius: 3.84, // 그림자 반경
+    elevation: 5,
   },
   creditImage: {
     width: 25,
@@ -278,6 +284,7 @@ const styles = StyleSheet.create({
   creditsValue: {
     fontSize: 23,
     fontWeight: "bold",
+    marginTop: 10,
   },
   contentsContainer: {
     flex: 0.9,
@@ -327,15 +334,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",
-    backgroundColor: "#FFEAEA",
-    width: Dimensions.get("window").width * 0.8,
-    height: Dimensions.get("window").height * 0.04,
+    justifyContent: "center",
   },
   questionBox: {
     alignItems: "center",
     backgroundColor: "#FFF6F6",
-    width: "116%",
-    height: Dimensions.get("window").height * 0.12,
+    width: "100%",
+    paddingHorizontal: 5,
+    borderRadius: 10,
+    paddingVertical: 10,
   },
   questionText: {
     fontSize: 16,
@@ -381,15 +388,15 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 5,
   },
-  
+
   purchasedItemContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
-  getPoint:{
+  getPoint: {
     position: "absolute",
-    right:10,
-    paddingHorizontal:10,
-    paddingVertical:5,
+    right: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     backgroundColor: "#FDF6E7",
     borderRadius: 20,
     shadowColor: "#000",
@@ -398,5 +405,13 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 5,
   },
-
+  modalTitleContainer: {
+    justifyContent: "center",
+    width: "100%",
+    backgroundColor: "#FFEAEA",
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
 });
