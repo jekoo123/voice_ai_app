@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
+
 import Icon from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import Toolbar from "../components/toolbar";
@@ -207,4 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "white",
   },
+
+
+  
 });

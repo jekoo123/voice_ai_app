@@ -18,10 +18,16 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jekoo.ksj"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "baddeaa0-a0a8-4a1a-88fe-acd81f7a6c3a"
+      }
     }
   }
 }
