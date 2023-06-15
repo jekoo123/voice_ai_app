@@ -21,61 +21,56 @@ import openai
 
 app = Flask(__name__)
 
-openai.api_key = "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"
-client_file = 'jekooGoogle.json'
-credentials = service_account.Credentials.from_service_account_file(client_file)
-client = speech.SpeechClient(credentials=credentials)
-app.secret_key = '1234'
-cluster = MongoClient("mongodb+srv://wprn1116:Z3VuxQrupXHoeoCZ@cluster0.zsnpgns.mongodb.net/?retryWrites=true&w=majority")
-db = cluster["voice_ai_app"]
-
-# # OpenAI API 키 설정
-# openai.api_key = os.environ.get("OPENAI_API_KEY")
+# OpenAI API 키 설정
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 
-# def get_secret():
+def get_secret():
 
-#     secret_name = "jekooGoogle"
-#     region_name = "ap-northeast-2"
+    secret_name = "jekooGoogle"
+    region_name = "ap-northeast-2"
 
-#     # AWS session 생성
-#     session = boto3.session.Session()
+    # AWS session 생성
+    session = boto3.session.Session()
 
-#     # Secret Manager client 생성
-#     client = session.client(
-#         service_name='secretsmanager',
-#         region_name=region_name
-#     )
+    # Secret Manager client 생성
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
 
-#     # Secret Manager에서 시크릿 가져오기
-#     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+    # Secret Manager에서 시크릿 가져오기
+    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     
-#     if 'SecretString' in get_secret_value_response:
-#         secret = get_secret_value_response['SecretString']
-#     else:
-#         secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+    if 'SecretString' in get_secret_value_response:
+        secret = get_secret_value_response['SecretString']
+    else:
+        secret = base64.b64decode(get_secret_value_response['SecretBinary'])
         
-#     return secret
+    return secret
 
-# # Google Cloud 인증 수행
-# def google_auth(secret):
-#     key_info = json.loads(secret)
-#     credentials = Credentials.from_service_account_info(key_info)
-#     return credentials
+# Google Cloud 인증 수행
+def google_auth(secret):
+    key_info = json.loads(secret)
+    credentials = Credentials.from_service_account_info(key_info)
+    return credentials
 
-# # 시크릿을 사용하여 Google Cloud에 인증
-# secret = get_secret()
-# credentials = google_auth(secret)
+# 시크릿을 사용하여 Google Cloud에 인증
+secret = get_secret()
+credentials = google_auth(secret)
 
-# # client_file = 'sa_speech_demo.json'
-# # credentials = service_account.Credentials.from_service_account_file(client_file)
-# # client = speech.SpeechClient(credentials=credentials)
 
-# app.secret_key = secrets.token_hex(16)
-# cluster = MongoClient(os.environ.get("MONGODB_URL"))
+
+# client_file = 'sa_speech_demo.json'
+# credentials = service_account.Credentials.from_service_account_file(client_file)
+client = speech.SpeechClient(credentials=credentials)
+
+app.secret_key = secrets.token_hex(16)
+cluster = MongoClient(os.environ.get("MONGODB_URL"))
 
 db = cluster["voice_ai_app"]
+
 
 def synthesize_speech(text, language_code):
     name = "ja-JP-Neural2-B"
@@ -107,6 +102,7 @@ def synthesize_speech(text, language_code):
     elapse = endTime - startTime
     print("5-1", elapse)
     return (audio_base64_string)
+
 
 def chat(user_input , prevDialog):
     print("atchat"+prevDialog)
@@ -211,6 +207,7 @@ def transcribe_audio():
     for result in response.results:
         transcription_text = result.alternatives[0].transcript
         pronunciation = result.alternatives[0].confidence
+
     chat_response = chat(transcription_text ,prevDialog)
     endTime = time.time()
     elapse = endTime - startTime
