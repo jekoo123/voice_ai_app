@@ -60,10 +60,6 @@ def google_auth(secret):
 secret = get_secret()
 credentials = google_auth(secret)
 
-
-
-# client_file = 'sa_speech_demo.json'
-# credentials = service_account.Credentials.from_service_account_file(client_file)
 client = speech.SpeechClient(credentials=credentials)
 
 app.secret_key = secrets.token_hex(16)
@@ -94,18 +90,18 @@ def synthesize_speech(text, language_code):
     )
     endTime = time.time()
     elapse = endTime - startTime
-    print("5: ", elapse)
+    
     startTime= time.time()
     audio_base64_bytes = base64.b64encode(response.audio_content)
     audio_base64_string = audio_base64_bytes.decode('ascii')
     endTime = time.time()
     elapse = endTime - startTime
-    print("5-1", elapse)
+    
     return (audio_base64_string)
 
 
 def chat(user_input , prevDialog):
-    print("atchat"+prevDialog)
+    
     try:
         response = openai.Completion.create(
             engine="text-davinci-003",
@@ -176,7 +172,7 @@ def transcribe_audio():
     file.save(file_path)
     endTime = time.time()
     elapse = endTime - startTime
-    print("1: ", elapse)
+    
     startTime = time.time()
     audio = AudioSegment.from_file(file_path)
     audio = audio.set_frame_rate(48000)
@@ -185,14 +181,14 @@ def transcribe_audio():
     audio.export(file_path, format="wav")
     endTime = time.time()
     elapse = endTime - startTime
-    print("2: ", elapse)
+    
     startTime = time.time()
     with open(file_path, "rb") as audio_file:
         content = audio_file.read()
         audio = speech.RecognitionAudio(content=content)
     endTime = time.time()
     elapse = endTime - startTime
-    print("3: ", elapse)
+    
     startTime = time.time()
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -202,7 +198,7 @@ def transcribe_audio():
     response = client.recognize(config=config, audio=audio)
     endTime = time.time()
     elapse = endTime - startTime
-    print("3-1: stt ", elapse)
+    
     startTime = time.time()
     for result in response.results:
         transcription_text = result.alternatives[0].transcript
@@ -211,7 +207,7 @@ def transcribe_audio():
     chat_response = chat(transcription_text ,prevDialog)
     endTime = time.time()
     elapse = endTime - startTime
-    print("4: ai response", elapse)
+    
     audio = synthesize_speech(chat_response, language_code)
     return jsonify({"sttResponse": transcription_text, "chatResponse": chat_response, "audio": audio, "pronunciation" : pronunciation}), 200
 
@@ -240,7 +236,7 @@ def grammer():
 def score():
     input = request.json.get('input')
     input2 = request.json.get('input2')
-    # print(input2)
+    # 
     letters = ('?', ',', '.')
     replacements = ('', '', '')
     table = input2.maketrans(dict(zip(letters, replacements)))
@@ -252,9 +248,9 @@ def score():
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
-    print(user['credit'])
-    print(user['language'])
-    print(user['contextMode'])
+    
+    
+    
     return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list'], "credit":user['credit'], "item":user['item'], "equip":user['equip']}), 200
 
 @app.route('/change_language',methods =['POST'] )
@@ -284,8 +280,8 @@ def update_list():
 def context():
     aisentence = request.json.get('aisentence')
     usersentence = request.json.get('usersentenceinput')
-    print(aisentence)
-    print(usersentence)
+    
+    
     response = openai.Completion.create(
             model="text-davinci-003",
             prompt=f"{aisentence}\n{usersentence}\nIf the above two sentences are contextual, please just return 1,  if not enter 0",

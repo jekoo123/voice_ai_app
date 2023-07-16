@@ -94,7 +94,7 @@ export default function ListScreen() {
         </View>
       </View>
       <View style={styles.toolbarContainer}>
-        <Toolbar />
+        <Toolbar/>
       </View>
     </View>
   );

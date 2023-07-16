@@ -67,7 +67,7 @@ export default function HomeScreen({ navigation }) {
       style={styles.homeContainer}
       source={require("../assets/Ai_default.png")}
     >
-      <View style={styles.logoutButtonContainer}>
+      {/* <View style={styles.logoutButtonContainer}>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => {
@@ -76,7 +76,7 @@ export default function HomeScreen({ navigation }) {
         >
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
       <TouchableOpacity
         style={styles.home}
         onPress={() =>
