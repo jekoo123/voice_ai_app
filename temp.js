@@ -17,7 +17,6 @@ import * as Progress from "react-native-progress";
 export default function MyScreen({ navigation }) {
   const [daysentence, setDaysentence] = useState(words[0]);
   const [grammer_score, setGrammer_score] = useState(0);
-  const [dia_log, setDia_log] = useState([]);
   const [dia_score, setDia_score] = useState(-1);
   const [proScore, setProScore] = useState(0);
   const [point, set_Point] = useState(0);
@@ -28,93 +27,30 @@ export default function MyScreen({ navigation }) {
   });
 
   useEffect(() => {
-    setDia_log(data.DIALOG);
     if (data.DIALOG.length > 1) {
       receiveScore();
       setProScore(computePronuncitaionScore());
     }
   }, []);
 
+  //3개 점수 다 받아오면 점수 계산
   useEffect(() => {
-    const fetchData = async () => {
-      const promises = dia_log.map(async (e) => {
-        try {
-          const response = await axios.post(`${SERVER_IP}/score`, {
-            input: e[0],
-            input2: e[2],
-          });
-          return response.data.grammer_score;
-        } catch (error) {
-          console.error(error);
-        }
-      });
-
-      const results = await Promise.all(promises);
-      const totalScore = results.reduce((accumulator, currentValue) => {
-        return accumulator + currentValue;
-      }, 0);
-      const averageScore = totalScore / results.length;
-      setGrammer_score(averageScore);
-      dispatch(setGraScore(averageScore));
-    };
-  
-    if (dia_log.length > 0) {
-      if (dia_log[dia_log.length - 1].length > 2) {
-        fetchData();
-      }
-    }
-  }, [dia_log]);
-
-  useEffect(() => {
-    const fetchContextScore = async () => {
-      const newContextResult = dia_log.slice(1).map(async (e, i) => {
-        try {
-          const response = await axios.post(`${SERVER_IP}/context`, {
-            aisentence: data.DIALOG[i][1],
-            usersentenceinput: e[0],
-          });
-          return response.data.output;
-        } catch (error) {
-          console.error(error);
-        }
-      });
-      const newArray2 = await Promise.all(newContextResult);
-      const total = newArray2.reduce((acc, curr) => {
-        return curr ? acc + curr : acc;
-      }, 0);
-      const average = total / newArray2.length;
-      setDia_score(average);
-      dispatch(setDiaScore(average));
-    };
-  
-    if(data.DIALOG){
-      if (data.DIALOG.length > 1) {
-        fetchContextScore();
-      }
-    }
-    
-  }, [grammer_score]);
-
-  useEffect(() => {
-      if (dia_score > -1) {
-        set_Point(
+    if (dia_score > -1) {
+      set_Point(
+        Math.floor(
+          (dia_score + grammer_score + proScore) * data.DIALOG.length * 10
+        )
+      );
+      dispatch(
+        setPoint(
           Math.floor(
             (dia_score + grammer_score + proScore) *
-              (data.DIALOG.length) *
+              (data.DIALOG.length - data.POINT_REF) *
               10
           )
-        );  
-        dispatch(
-          setPoint(
-            Math.floor(
-              (dia_score + grammer_score + proScore) *
-                (data.DIALOG.length - data.POINT_REF) *
-                10
-            )
-          )
-        );
-        dispatch(pointRef(data.DIALOG.length));
-      
+        )
+      );
+      dispatch(pointRef(data.DIALOG.length));
     }
   }, [dia_score]);
 
@@ -132,24 +68,41 @@ export default function MyScreen({ navigation }) {
 
   const receiveScore = async () => {
     try {
-      const newArray1Promises = data.DIALOG.map(async (e) => {
-        try {
-          const response = await axios.post(`${SERVER_IP}/grammer`, {
-            input: e[0],
-            id: data.USER[0],
-          });
-          return [...e, response.data.grammer];
-        } catch (error) {
-          console.error(error);
-          return e;
-        }
+      const promises = data.DIALOG.map(async (e) => {
+        const response = await axios.post(`${SERVER_IP}/score`, {
+          input: e[0],
+          input2: e[2],
+        });
+        return response.data.grammer_score;
       });
-
-      const newArray1 = await Promise.all(newArray1Promises);
-      setDia_log(newArray1);
-      dispatch(setDialog(newArray1));
+      const results = await Promise.all(promises);
+      const totalScore = results.reduce((accumulator, currentValue) => {
+        return accumulator + currentValue;
+      }, 0);
+      const averageScore = totalScore / results.length;
+      setGrammer_score(averageScore);
+      dispatch(setGraScore(averageScore));
     } catch (error) {
-      console.error(error);
+      console.log(error);
+    }
+
+    try {
+      const newContextResult = data.DIALOG.slice(1).map(async (e, i) => {
+        const response = await axios.post(`${SERVER_IP}/context`, {
+          aisentence: data.DIALOG[i][1],
+          usersentenceinput: e[0],
+        });
+        return response.data.output;
+      });
+      const newArray2 = await Promise.all(newContextResult);
+      const total = newArray2.reduce((acc, curr) => {
+        return curr ? acc + curr : acc;
+      }, 0);
+      const average = total / newArray2.length;
+      setDia_score(average);
+      dispatch(setDiaScore(average));
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -157,22 +110,23 @@ export default function MyScreen({ navigation }) {
     const sum = data.PRO_SCORE.reduce((acc, curr) => acc + curr, 0);
     return sum / data.PRO_SCORE.length;
   };
-
   const ScoreComponent = ({ score, scoreTitle }) => (
     <View>
       <View style={styles.scoreSmallTitle}>
         <Text style={styles.scoreText}>{scoreTitle} :</Text>
-
+        {score > 0 && (
           <Text style={styles.scoreText}>
             {" "}
             {Math.floor(score * 100) / 10}
           </Text>
-
+        )}
       </View>
   
-      
+      {score > 0 ? (
         <Progress.Bar progress={score} width={200} color="#FFB14E" />
-      
+      ) : (
+        <Text>Loading or Not enough talking.</Text>
+      )}
     </View>
   );
   
@@ -189,10 +143,9 @@ export default function MyScreen({ navigation }) {
           </View>
         </View>
         <View style={styles.scoreContainer}>
-
           <Text style={styles.scoreTitle}>내 점수 : {point}</Text>
           {point == 0 ? (
-            <Text  style={styles.text}>Loading or Not enough talking.</Text>
+            <Text  style={styles.text}>Not enough talking.</Text>
           ) : (
             <View>
               <ScoreComponent score={grammer_score} scoreTitle="문법 점수" />

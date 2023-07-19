@@ -65,7 +65,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <ImageBackground
       style={styles.homeContainer}
-      source={require("../assets/Ai_default.png")}
+      source={require("../assets/model/blazer.png")}
     >
       {/* <View style={styles.logoutButtonContainer}>
         <TouchableOpacity

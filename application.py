@@ -248,9 +248,6 @@ def score():
 def language():
     id = request.json.get('id')
     user = db.users.find_one({"id": id})
-    
-    
-    
     return jsonify({"language":user['language'] , "context": user['contextMode'], "list":user['list'], "credit":user['credit'], "item":user['item'], "equip":user['equip']}), 200
 
 @app.route('/change_language',methods =['POST'] )
@@ -280,17 +277,15 @@ def update_list():
 def context():
     aisentence = request.json.get('aisentence')
     usersentence = request.json.get('usersentenceinput')
-    
-    
     response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=f"{aisentence}\n{usersentence}\nIf the above two sentences are contextual, please just return 1,  if not enter 0",
-            temperature=0,
-            max_tokens=60,
-            top_p=1.0,
-            frequency_penalty=0.0,
-            presence_penalty=0.0
-        )
+        model="text-davinci-003",
+        prompt=f"{aisentence}\n{usersentence}\nIf the above two sentences are contextual, please just return 1,  if not enter 0",
+        temperature=0,
+        max_tokens=60,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0
+    )
         
     output = response.choices[0].text.strip().split('\n')
     output = [elem for elem in output if elem.isdigit()]
